@@ -7,7 +7,8 @@ import {
   StyleSheet,
   ScrollView,
 } from 'react-native';
-import { Colors, FontFamily, FontSize, Spacing, Radius } from '../constants/theme';
+import { Colors, FontSize, Spacing, Radius } from '../constants/theme';
+import { useFontFamily } from '../store/progressStore';
 
 interface Props {
   visible: boolean;
@@ -18,6 +19,12 @@ interface Props {
 
 export default function HintModal({ visible, hints, scoreDeduction, onClose }: Props) {
   const [step, setStep] = useState(0);
+
+  // Typography for dyslexia accessibility
+  const headingFont = useFontFamily('heading');
+  const bodyFont = useFontFamily('body');
+  const monoFont = useFontFamily('mono');
+  const monoBoldFont = useFontFamily('monoBold');
 
   const handleNext = () => {
     if (step < hints.length - 1) setStep(s => s + 1);
@@ -38,17 +45,17 @@ export default function HintModal({ visible, hints, scoreDeduction, onClose }: P
       <View style={styles.overlay}>
         <View style={styles.sheet}>
           <View style={styles.header}>
-            <Text style={styles.title}>💡 Step-by-Step Hint</Text>
-            <Text style={styles.cost}>−{scoreDeduction} pts</Text>
+            <Text style={[styles.title, { fontFamily: headingFont }]}>💡 Step-by-Step Hint</Text>
+            <Text style={[styles.cost, { fontFamily: monoBoldFont }]}>−{scoreDeduction} pts</Text>
           </View>
 
           <ScrollView style={styles.stepsContainer} showsVerticalScrollIndicator={false}>
             {hints.slice(0, step + 1).map((h, i) => (
               <View key={i} style={[styles.stepRow, i === step && styles.stepRowActive]}>
                 <View style={[styles.stepDot, i === step && styles.stepDotActive]}>
-                  <Text style={styles.stepDotText}>{i + 1}</Text>
+                  <Text style={[styles.stepDotText, { fontFamily: monoBoldFont }]}>{i + 1}</Text>
                 </View>
-                <Text style={[styles.stepText, i === step && styles.stepTextActive]}>
+                <Text style={[styles.stepText, i === step && styles.stepTextActive, { fontFamily: monoFont }]}>
                   {h}
                 </Text>
               </View>
@@ -58,11 +65,11 @@ export default function HintModal({ visible, hints, scoreDeduction, onClose }: P
           <View style={styles.footer}>
             {step < hints.length - 1 ? (
               <TouchableOpacity style={styles.nextBtn} onPress={handleNext}>
-                <Text style={styles.nextBtnText}>Next Step →</Text>
+                <Text style={[styles.nextBtnText, { fontFamily: headingFont }]}>Next Step →</Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity style={styles.doneBtn} onPress={handleClose}>
-                <Text style={styles.doneBtnText}>Got it! ✓</Text>
+                <Text style={[styles.doneBtnText, { fontFamily: headingFont }]}>Got it! ✓</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -95,12 +102,10 @@ const styles = StyleSheet.create({
   title: {
     color: Colors.white,
     fontSize: FontSize.xl,
-    fontFamily: FontFamily.heading,
   },
   cost: {
     color: Colors.danger,
     fontSize: FontSize.md,
-    fontFamily: FontFamily.monoBold,
   },
   stepsContainer: {
     marginBottom: Spacing.lg,
@@ -130,13 +135,11 @@ const styles = StyleSheet.create({
   stepDotText: {
     color: Colors.white,
     fontSize: FontSize.xs,
-    fontFamily: FontFamily.monoBold,
   },
   stepText: {
     flex: 1,
     color: Colors.muted,
     fontSize: FontSize.md,
-    fontFamily: FontFamily.mono,
     lineHeight: 22,
   },
   stepTextActive: {
@@ -152,7 +155,6 @@ const styles = StyleSheet.create({
   nextBtnText: {
     color: Colors.white,
     fontSize: FontSize.lg,
-    fontFamily: FontFamily.heading,
   },
   doneBtn: {
     backgroundColor: Colors.success,
@@ -163,6 +165,5 @@ const styles = StyleSheet.create({
   doneBtnText: {
     color: Colors.bg,
     fontSize: FontSize.lg,
-    fontFamily: FontFamily.heading,
   },
 });

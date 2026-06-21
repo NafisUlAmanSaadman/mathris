@@ -9,9 +9,11 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useGameStore } from '../store/gameStore';
-import { Colors, FontFamily, FontSize, Spacing, Radius } from '../constants/theme';
+import { useFontFamily } from '../store/progressStore';
+import { Colors, FontSize, Spacing, Radius } from '../constants/theme';
 import type { EquationTopic } from '../engine/equations';
 import type { Difficulty } from '../constants/config';
+import { triggerImpactHaptic } from '../utils/haptics';
 
 interface TopicOption {
   topic: EquationTopic;
@@ -42,25 +44,44 @@ export default function TopicSelectScreen() {
   const { setDifficulty, resetGame } = useGameStore();
   const [selected, setSelected] = useState<TopicOption | null>(null);
 
+  // Typography for dyslexia accessibility
+  const headingFont = useFontFamily('heading');
+  const headingMediumFont = useFontFamily('headingMedium');
+  const bodyFont = useFontFamily('body');
+
   const handleStart = () => {
     if (!selected) return;
+    triggerImpactHaptic();
     resetGame();
     setDifficulty(selected.difficulty);
+    // Note: We can also pass topic target filter to store if wanted,
+    // but the original version just routed. We'll keep it exactly the same
+    // but add our new settings features.
     router.push('/game');
+  };
+
+  const handleSelect = (opt: TopicOption) => {
+    triggerImpactHaptic();
+    setSelected(opt);
+  };
+
+  const handleBack = () => {
+    triggerImpactHaptic();
+    router.back();
   };
 
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
           <Text style={styles.backBtnText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Practice Mode</Text>
+        <Text style={[styles.headerTitle, { fontFamily: headingFont }]}>Practice Mode</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.desc}>
+        <Text style={[styles.desc, { fontFamily: bodyFont }]}>
           Pick a topic to drill. Only equations from that topic will fall — perfect for targeting weak spots.
         </Text>
 
@@ -75,12 +96,12 @@ export default function TopicSelectScreen() {
                   borderWidth: 2,
                 },
               ]}
-              onPress={() => setSelected(opt)}
+              onPress={() => handleSelect(opt)}
               activeOpacity={0.8}
             >
               <Text style={styles.topicIcon}>{opt.icon}</Text>
-              <Text style={styles.topicLabel}>{opt.label}</Text>
-              <Text style={[styles.topicDiff, { color: DIFF_COLORS[opt.difficulty] }]}>
+              <Text style={[styles.topicLabel, { fontFamily: headingMediumFont }]}>{opt.label}</Text>
+              <Text style={[styles.topicDiff, { color: DIFF_COLORS[opt.difficulty], fontFamily: bodyFont }]}>
                 {opt.difficulty}
               </Text>
             </TouchableOpacity>
@@ -92,7 +113,7 @@ export default function TopicSelectScreen() {
           onPress={handleStart}
           disabled={!selected}
         >
-          <Text style={styles.startBtnText}>
+          <Text style={[styles.startBtnText, { fontFamily: headingFont }]}>
             {selected ? `▶  Practice ${selected.label}` : 'Select a topic above'}
           </Text>
         </TouchableOpacity>
@@ -126,7 +147,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: Colors.white,
     fontSize: FontSize.xl,
-    fontFamily: FontFamily.heading,
   },
   container: {
     padding: Spacing.xl,
@@ -136,7 +156,6 @@ const styles = StyleSheet.create({
   desc: {
     color: Colors.muted,
     fontSize: FontSize.md,
-    fontFamily: FontFamily.body,
     lineHeight: 22,
     textAlign: 'center',
   },
@@ -159,12 +178,10 @@ const styles = StyleSheet.create({
   topicLabel: {
     color: Colors.white,
     fontSize: FontSize.sm,
-    fontFamily: FontFamily.headingMedium,
     textAlign: 'center',
   },
   topicDiff: {
     fontSize: FontSize.xs,
-    fontFamily: FontFamily.body,
     textTransform: 'capitalize',
   },
   startBtn: {
@@ -181,6 +198,5 @@ const styles = StyleSheet.create({
   startBtnText: {
     color: Colors.white,
     fontSize: FontSize.lg,
-    fontFamily: FontFamily.heading,
   },
 });

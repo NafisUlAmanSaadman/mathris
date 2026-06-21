@@ -218,6 +218,27 @@ export class SQLiteRepository implements IRepository {
     await this.db.runAsync(`DELETE FROM wrong_answers`);
   }
 
+  // ── Preferences ──────────────────────────────────────────────────────────────
+
+  async getPreference(key: string, defaultValue: string): Promise<string> {
+    try {
+      const row = await this.db.getFirstAsync<{ value: string }>(
+        `SELECT value FROM meta WHERE key = ?`,
+        [key],
+      );
+      return row ? row.value : defaultValue;
+    } catch {
+      return defaultValue;
+    }
+  }
+
+  async setPreference(key: string, value: string): Promise<void> {
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)`,
+      [key, value],
+    );
+  }
+
   // ── Housekeeping ─────────────────────────────────────────────────────────────
 
   async clearAll(): Promise<void> {

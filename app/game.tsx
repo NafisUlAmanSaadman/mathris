@@ -5,18 +5,19 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  Alert,
   Animated,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useGameStore } from '../store/gameStore';
-import { useProgressStore } from '../store/progressStore';
+import { useProgressStore, useFontFamily } from '../store/progressStore';
 import GameBoard from '../components/GameBoard';
 import Keypad from '../components/Keypad';
 import HUD from '../components/HUD';
 import HintModal from '../components/HintModal';
+import LevelUpOverlay from '../components/LevelUpOverlay';
+import { MathMasteryModel } from '../engine/mlModel';
+import { triggerSuccessHaptic, triggerErrorHaptic, triggerImpactHaptic } from '../utils/haptics';
 import {
-  createEmptyGrid,
   lockBrick,
   clearFullRows,
   isValidPosition,
@@ -33,17 +34,20 @@ import { playSound } from '../engine/audio';
 import {
   TICK_INTERVAL_MS,
   FREEZE_DURATION_MS,
-  LOCK_DELAY_MS,
   SCORE,
   HINT_SCORE_COST,
   COMBO_MULTIPLIER,
   MAX_RETRIES,
-  STARS,
 } from '../constants/config';
-import { Colors, FontFamily, FontSize, Spacing, Radius } from '../constants/theme';
+import { Colors, FontSize, Spacing, Radius } from '../constants/theme';
 
 export default function GameScreen() {
   const router = useRouter();
+
+  // Typography for dyslexia
+  const headingFont = useFontFamily('heading');
+  const bodyFont = useFontFamily('body');
+  const monoBoldFont = useFontFamily('monoBold');
 
   // Game store
   const {
@@ -59,11 +63,18 @@ export default function GameScreen() {
     setClearedRows,
   } = useGameStore();
 
-  const { recordCorrect, recordWrong, recordSession, addXP } = useProgressStore();
+  const { recordCorrect, recordWrong, recordSession, addXP, adaptiveModeEnabled, masteryByTopic } = useProgressStore();
 
   const [hintVisible, setHintVisible] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
   const feedbackAnim = useRef(new Animated.Value(0)).current;
+
+  // ML model instance
+  const mlModel = useRef(new MathMasteryModel()).current;
+
+  // Level Up State
+  const [levelUpActive, setLevelUpActive] = useState(false);
+  const prevLevelRef = useRef(level);
 
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const frozenRef = useRef(false);
@@ -74,10 +85,46 @@ export default function GameScreen() {
   useEffect(() => { brickRef.current = currentBrick; }, [currentBrick]);
   useEffect(() => { gridRef.current = grid; }, [grid]);
 
+  // Detect Level Up during game
+  useEffect(() => {
+    if (level > prevLevelRef.current && phase === 'playing') {
+      triggerSuccessHaptic();
+      setLevelUpActive(true);
+      prevLevelRef.current = level;
+    }
+  }, [level, phase]);
+
   // ─── Spawn Next Brick ───────────────────────────────────────────────────────
   const spawnBrick = useCallback(() => {
+    if (levelUpActive) return;
+
     const baseInterval = TICK_INTERVAL_MS[difficulty];
-    const eq = generateEquation(difficulty);
+    let eq;
+
+    // Use ML model if Adaptive Mode is enabled
+    if (adaptiveModeEnabled) {
+      const weightedList = mlModel.getWeightedTopicList(difficulty, masteryByTopic);
+      if (weightedList.length > 0) {
+        // Weighted random selection
+        const totalWeight = weightedList.reduce((sum, item) => sum + item.weight, 0);
+        let randomVal = Math.random() * totalWeight;
+        let selectedTopic = weightedList[0].topic;
+
+        for (const item of weightedList) {
+          randomVal -= item.weight;
+          if (randomVal <= 0) {
+            selectedTopic = item.topic;
+            break;
+          }
+        }
+        eq = generateEquation(difficulty, selectedTopic as any);
+      } else {
+        eq = generateEquation(difficulty);
+      }
+    } else {
+      eq = generateEquation(difficulty);
+    }
+
     const tetro = randomTetromino();
     const brick = createFallingBrick(tetro, eq, 3, baseInterval);
 
@@ -86,11 +133,11 @@ export default function GameScreen() {
       return;
     }
     setCurrentBrick(brick);
-  }, [difficulty]);
+  }, [difficulty, adaptiveModeEnabled, masteryByTopic, levelUpActive]);
 
   // ─── Game Loop Tick ─────────────────────────────────────────────────────────
   const tick = useCallback(() => {
-    if (frozenRef.current) return;
+    if (frozenRef.current || levelUpActive) return;
     const brick = brickRef.current;
     const g = gridRef.current;
     if (!brick) return;
@@ -120,22 +167,46 @@ export default function GameScreen() {
         setTimeout(spawnBrick, 100);
       }
     }
-  }, [spawnBrick, isHotStreak]);
+  }, [spawnBrick, isHotStreak, levelUpActive]);
 
   // ─── Start / Restart Tick Interval ─────────────────────────────────────────
   const startTick = useCallback((interval: number) => {
     if (tickRef.current) clearInterval(tickRef.current);
-    tickRef.current = setInterval(tick, interval);
-  }, [tick]);
+    if (!levelUpActive) {
+      tickRef.current = setInterval(tick, interval);
+    }
+  }, [tick, levelUpActive]);
+
+  // Resume game after Level Up closes
+  const handleCloseLevelUp = () => {
+    setLevelUpActive(false);
+    triggerImpactHaptic();
+    if (currentBrick) {
+      startTick(currentBrick.fallInterval);
+    } else {
+      spawnBrick();
+    }
+  };
+
+  // Pause tick loop when Level Up overlay is active
+  useEffect(() => {
+    if (levelUpActive && tickRef.current) {
+      clearInterval(tickRef.current);
+    } else if (!levelUpActive && currentBrick && phase === 'playing') {
+      startTick(currentBrick.fallInterval);
+    }
+  }, [levelUpActive]);
 
   // ─── Answer Submit ──────────────────────────────────────────────────────────
   const handleAnswer = useCallback((input: string) => {
+    if (levelUpActive) return;
     const brick = brickRef.current;
     if (!brick) return;
 
     const correct = validateAnswer(brick.equation, input);
 
     if (correct) {
+      triggerSuccessHaptic();
       const pts = SCORE.lockCorrect * (isHotStreak ? COMBO_MULTIPLIER : 1);
       addScore(pts);
       incrementCombo();
@@ -145,6 +216,7 @@ export default function GameScreen() {
       playSound('lock');
       if (isHotStreak) playSound('streak');
     } else {
+      triggerErrorHaptic();
       if (brick.retries < MAX_RETRIES) {
         const penalised = applySpeedPenalty(brick);
         setCurrentBrick(penalised);
@@ -168,7 +240,7 @@ export default function GameScreen() {
         playSound('wrong');
       }
     }
-  }, [isHotStreak, difficulty]);
+  }, [isHotStreak, difficulty, levelUpActive]);
 
   // ─── Feedback Banner ────────────────────────────────────────────────────────
   const showFeedback = (msg: string, _color: string) => {
@@ -181,7 +253,8 @@ export default function GameScreen() {
 
   // ─── Freeze ─────────────────────────────────────────────────────────────────
   const handleFreeze = () => {
-    if (freezeTokens <= 0 || frozenRef.current) return;
+    if (levelUpActive || freezeTokens <= 0 || frozenRef.current) return;
+    triggerImpactHaptic();
     useFreeze();
     frozenRef.current = true;
     if (brickRef.current) setCurrentBrick({ ...brickRef.current, frozen: true });
@@ -194,7 +267,8 @@ export default function GameScreen() {
 
   // ─── Hint ───────────────────────────────────────────────────────────────────
   const handleHint = () => {
-    if (hintTokens <= 0) return;
+    if (levelUpActive || hintTokens <= 0) return;
+    triggerImpactHaptic();
     useHint();
     addScore(-HINT_SCORE_COST);
     playSound('hint');
@@ -203,24 +277,32 @@ export default function GameScreen() {
 
   // ─── Swipe / Move Controls ──────────────────────────────────────────────────
   const moveLeft = () => {
+    if (levelUpActive) return;
+    triggerImpactHaptic();
     const brick = brickRef.current;
     if (brick && isValidPosition(gridRef.current, brick, 0, -1)) {
       setCurrentBrick({ ...brick, col: brick.col - 1 });
     }
   };
   const moveRight = () => {
+    if (levelUpActive) return;
+    triggerImpactHaptic();
     const brick = brickRef.current;
     if (brick && isValidPosition(gridRef.current, brick, 0, 1)) {
       setCurrentBrick({ ...brick, col: brick.col + 1 });
     }
   };
   const rotateBrick = () => {
+    if (levelUpActive) return;
+    triggerImpactHaptic();
     const brick = brickRef.current;
     if (!brick) return;
     const rotated = tryRotate(gridRef.current, brick);
     if (rotated) setCurrentBrick(rotated);
   };
   const hardDrop = () => {
+    if (levelUpActive) return;
+    triggerImpactHaptic();
     const brick = brickRef.current;
     if (!brick) return;
     let drop = 0;
@@ -260,10 +342,10 @@ export default function GameScreen() {
   }, []);
 
   useEffect(() => {
-    if (currentBrick && phase === 'playing') {
+    if (currentBrick && phase === 'playing' && !levelUpActive) {
       startTick(currentBrick.fallInterval);
     }
-  }, [currentBrick?.fallInterval, phase]);
+  }, [currentBrick?.fallInterval, phase, levelUpActive]);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -271,6 +353,7 @@ export default function GameScreen() {
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => {
+            triggerImpactHaptic();
             if (tickRef.current) clearInterval(tickRef.current);
             router.back();
           }}
@@ -278,7 +361,7 @@ export default function GameScreen() {
         >
           <Text style={styles.backBtnText}>✕</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>MATHRIS</Text>
+        <Text style={[styles.headerTitle, { fontFamily: headingFont }]}>MATHRIS</Text>
         <View style={styles.headerRight} />
       </View>
 
@@ -300,23 +383,23 @@ export default function GameScreen() {
       {/* Feedback banner */}
       {feedbackMsg && (
         <Animated.View style={[styles.feedbackBanner, { opacity: feedbackAnim }]}>
-          <Text style={styles.feedbackText}>{feedbackMsg}</Text>
+          <Text style={[styles.feedbackText, { fontFamily: headingFont }]}>{feedbackMsg}</Text>
         </Animated.View>
       )}
 
       {/* Brick controls */}
       <View style={styles.controls}>
         <TouchableOpacity style={styles.controlBtn} onPress={moveLeft}>
-          <Text style={styles.controlText}>◀</Text>
+          <Text style={[styles.controlText, { fontFamily: monoBoldFont }]}>◀</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.controlBtn} onPress={rotateBrick}>
-          <Text style={styles.controlText}>↻</Text>
+          <Text style={[styles.controlText, { fontFamily: monoBoldFont }]}>↻</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.controlBtn} onPress={hardDrop}>
-          <Text style={styles.controlText}>▼▼</Text>
+          <Text style={[styles.controlText, { fontFamily: monoBoldFont }]}>▼▼</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.controlBtn} onPress={moveRight}>
-          <Text style={styles.controlText}>▶</Text>
+          <Text style={[styles.controlText, { fontFamily: monoBoldFont }]}>▶</Text>
         </TouchableOpacity>
       </View>
 
@@ -327,14 +410,14 @@ export default function GameScreen() {
           onPress={handleFreeze}
         >
           <Text style={styles.powerIcon}>🧊</Text>
-          <Text style={styles.powerLabel}>Freeze ({freezeTokens})</Text>
+          <Text style={[styles.powerLabel, { fontFamily: bodyFont }]}>Freeze ({freezeTokens})</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.powerBtn, hintTokens === 0 && styles.powerBtnDim]}
           onPress={handleHint}
         >
           <Text style={styles.powerIcon}>💡</Text>
-          <Text style={styles.powerLabel}>Hint ({hintTokens})</Text>
+          <Text style={[styles.powerLabel, { fontFamily: bodyFont }]}>Hint ({hintTokens})</Text>
         </TouchableOpacity>
       </View>
 
@@ -348,6 +431,11 @@ export default function GameScreen() {
         scoreDeduction={HINT_SCORE_COST}
         onClose={() => setHintVisible(false)}
       />
+
+      {/* Level Up overlay */}
+      {levelUpActive && (
+        <LevelUpOverlay newLevel={level} onClose={handleCloseLevelUp} />
+      )}
     </SafeAreaView>
   );
 }
@@ -377,7 +465,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: Colors.white,
     fontSize: FontSize.lg,
-    fontFamily: FontFamily.heading,
     letterSpacing: 4,
   },
   headerRight: { width: 36 },
@@ -399,7 +486,6 @@ const styles = StyleSheet.create({
   feedbackText: {
     color: Colors.white,
     fontSize: FontSize.md,
-    fontFamily: FontFamily.heading,
   },
   controls: {
     flexDirection: 'row',
@@ -420,7 +506,6 @@ const styles = StyleSheet.create({
   controlText: {
     color: Colors.offWhite,
     fontSize: FontSize.lg,
-    fontFamily: FontFamily.monoBold,
   },
   powerRow: {
     flexDirection: 'row',
@@ -445,6 +530,5 @@ const styles = StyleSheet.create({
   powerLabel: {
     color: Colors.offWhite,
     fontSize: FontSize.sm,
-    fontFamily: FontFamily.body,
   },
 });

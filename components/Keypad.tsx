@@ -4,11 +4,12 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Vibration,
   useWindowDimensions,
 } from 'react-native';
-import { Colors, FontFamily, FontSize, Spacing, Radius } from '../constants/theme';
+import { Colors, FontSize, Spacing, Radius } from '../constants/theme';
 import type { Difficulty } from '../constants/config';
+import { triggerImpactHaptic } from '../utils/haptics';
+import { useFontFamily } from '../store/progressStore';
 
 interface Props {
   difficulty: Difficulty;
@@ -30,6 +31,9 @@ export default function Keypad({ difficulty, onSubmit, disabled }: Props) {
   const { width } = useWindowDimensions();
 
   const isHard = difficulty === 'hard';
+  const monoFont = useFontFamily('mono');
+  const monoBoldFont = useFontFamily('monoBold');
+  const headingFont = useFontFamily('heading');
 
   const currentVal = isHard ? (activeField === 'x' ? xVal : yVal) : xVal;
   const setCurrentVal = (v: string) => {
@@ -43,7 +47,7 @@ export default function Keypad({ difficulty, onSubmit, disabled }: Props) {
 
   const handleKey = (key: string) => {
     if (disabled) return;
-    Vibration.vibrate(10);
+    triggerImpactHaptic();
     if (key === '⌫') {
       setCurrentVal(currentVal.slice(0, -1));
     } else {
@@ -54,6 +58,7 @@ export default function Keypad({ difficulty, onSubmit, disabled }: Props) {
 
   const handleSubmit = () => {
     if (disabled) return;
+    triggerImpactHaptic();
     let answer: string;
     if (isHard) {
       answer = `X=${xVal},Y=${yVal}`;
@@ -75,23 +80,29 @@ export default function Keypad({ difficulty, onSubmit, disabled }: Props) {
         <View style={styles.displayRow}>
           <TouchableOpacity
             style={[styles.displayField, activeField === 'x' && styles.displayFieldActive]}
-            onPress={() => setActiveField('x')}
+            onPress={() => {
+              triggerImpactHaptic();
+              setActiveField('x');
+            }}
           >
-            <Text style={styles.displayLabel}>X =</Text>
-            <Text style={styles.displayValue}>{xVal || '?'}</Text>
+            <Text style={[styles.displayLabel, { fontFamily: monoFont }]}>X =</Text>
+            <Text style={[styles.displayValue, { fontFamily: monoBoldFont }]}>{xVal || '?'}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.displayField, activeField === 'y' && styles.displayFieldActive]}
-            onPress={() => setActiveField('y')}
+            onPress={() => {
+              triggerImpactHaptic();
+              setActiveField('y');
+            }}
           >
-            <Text style={styles.displayLabel}>Y =</Text>
-            <Text style={styles.displayValue}>{yVal || '?'}</Text>
+            <Text style={[styles.displayLabel, { fontFamily: monoFont }]}>Y =</Text>
+            <Text style={[styles.displayValue, { fontFamily: monoBoldFont }]}>{yVal || '?'}</Text>
           </TouchableOpacity>
         </View>
       ) : (
         <View style={styles.displayRow}>
           <View style={[styles.displayField, styles.displayFieldActive, { flex: 1 }]}>
-            <Text style={styles.displayValue}>{xVal || '?'}</Text>
+            <Text style={[styles.displayValue, { fontFamily: monoBoldFont }]}>{xVal || '?'}</Text>
           </View>
         </View>
       )}
@@ -106,7 +117,7 @@ export default function Keypad({ difficulty, onSubmit, disabled }: Props) {
               onPress={() => handleKey(key)}
               activeOpacity={0.7}
             >
-              <Text style={styles.keyText}>{key}</Text>
+              <Text style={[styles.keyText, { fontFamily: monoBoldFont }]}>{key}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -118,7 +129,7 @@ export default function Keypad({ difficulty, onSubmit, disabled }: Props) {
         onPress={handleSubmit}
         activeOpacity={0.8}
       >
-        <Text style={styles.submitText}>✓  Submit</Text>
+        <Text style={[styles.submitText, { fontFamily: headingFont }]}>✓  Submit</Text>
       </TouchableOpacity>
     </View>
   );
@@ -152,12 +163,10 @@ const styles = StyleSheet.create({
   displayLabel: {
     color: Colors.muted,
     fontSize: FontSize.xs,
-    fontFamily: FontFamily.mono,
   },
   displayValue: {
     color: Colors.white,
     fontSize: FontSize.xl,
-    fontFamily: FontFamily.monoBold,
     marginTop: 2,
   },
   keyRow: {
@@ -180,7 +189,6 @@ const styles = StyleSheet.create({
   keyText: {
     color: Colors.offWhite,
     fontSize: FontSize.lg,
-    fontFamily: FontFamily.monoBold,
   },
   submitButton: {
     backgroundColor: Colors.primary,
@@ -192,7 +200,6 @@ const styles = StyleSheet.create({
   submitText: {
     color: Colors.white,
     fontSize: FontSize.lg,
-    fontFamily: FontFamily.heading,
     letterSpacing: 0.5,
   },
 });

@@ -447,12 +447,33 @@ Accessible from the Main Menu → **📊 Dashboard**. No login required — all 
 | Panel | What it shows |
 |---|---|
 | **Overview cards** | Current level, total XP, games played, overall accuracy |
+| **🤖 ML Learning Profile** | On-device Logistic Regression SGD model metrics: cross-entropy loss, epochs, total observations, and predicted struggle rates (AI Forecast) |
 | **Accuracy by Topic** | Bar chart — how well the player performs per operation type |
 | **Recent Scores** | Line chart — score trend across the last 7 sessions |
 | **Needs Practice** | Topics with < 70% accuracy, flagged automatically |
 | **Wrong Answer History** | Every missed equation with the correct answer shown |
 
 > **For teachers:** Accuracy by Topic maps directly to school curriculum topics — you can see at a glance whether a student struggles with fractions, algebra, or multiplication facts.
+
+---
+
+## 🤖 On-Device Machine Learning (Adaptive Mode)
+
+Mathris includes a pure-TypeScript **Logistic Regression Classifier** running completely on-device. The model trains using **Stochastic Gradient Descent (SGD)** on the player's equation attempt history.
+
+- **Struggle Forecast**: It calculates features (bias, difficulty multipliers, and one-hot topic weights) to predict the probability of failure (`P(Wrong)`) for each topic.
+- **Adaptive Spawning**: When the player enables **"Target Weak Areas (Adaptive)"**, the equation generator utilizes the model's predictions to run a weighted selection (roulette wheel), spawning equations they struggle with more frequently to maximize learning.
+- **Diagnostics**: The parent/teacher dashboard displays live training metrics including Cross-Entropy loss, total training samples, and individual topic error probabilities.
+
+---
+
+## 🎨 Accessibility & Animations
+
+We prioritize visual excellence, smooth performance, and inclusive design:
+- **Dyslexia-friendly Font**: Toggling this setting instantly shifts the entire application layout to **OpenDyslexic** (Regular/Bold), designed to improve readability for children with dyslexia.
+- **Safe Haptic Feedback**: Integrates subtle native vibrations on keypresses and distinct haptics on correct/wrong answers. Automatically respects user preferences.
+- **Main Menu Brick Rain (Skia)**: A beautiful background animation of falling Tetris blocks powered by `@shopify/react-native-skia` running at 60fps on the UI thread.
+- **Animated Level-Up Screen**: A full-screen celebration modal built with `react-native-reanimated` using spring physics, rotating neon rings, and floating confetti.
 
 ---
 
@@ -476,9 +497,14 @@ These principles shape every decision in Mathris:
 
 ## 🗺 Roadmap
 
-### v1 — Current
-- [x] Core Tetris engine
-- [x] Easy / Medium / Hard equation generators
+### v2 — Current
+- [x] On-Device ML model with SGD for adaptive difficulty
+- [x] Animated brick rain on the main menu (Shopify Skia)
+- [x] Safe haptic feedback on correct/wrong answers & buttons (expo-haptics)
+- [x] Dyslexia-friendly font support (OpenDyslexic)
+- [x] Full-screen animated Level-up celebration modal (Reanimated)
+- [x] Core Tetris engine and physics
+- [x] Easy / Medium / Hard equation generators (with decimal systems in Hard)
 - [x] Freeze, Hint, Hot Streak power-ups
 - [x] Post-game review screen
 - [x] Parent/Teacher dashboard with charts
@@ -486,22 +512,16 @@ These principles shape every decision in Mathris:
 - [x] expo-sqlite persistence with repository pattern
 - [x] XP & level progression
 
-### v2 — Planned
+### v3 — Future
 - [ ] Real sound effects (replace placeholder MP3s)
-- [ ] Animated brick rain on the main menu (Skia)
 - [ ] Ghost piece label (show equation on ghost)
 - [ ] Daily Challenge — one special puzzle per day
 - [ ] Perfect-clear bonus detection
-- [ ] Haptic feedback on correct/wrong answers
-- [ ] Animated level-up screen
 - [ ] Export wrong-answer log to PDF
-
-### v3 — Future
 - [ ] Cloud sync via Supabase (plug in `SupabaseRepository`)
 - [ ] Multiplayer head-to-head mode
 - [ ] Teacher class dashboard (web app)
 - [ ] Localisation (Arabic, French, Spanish)
-- [ ] Accessibility: dyslexia-friendly font option
 
 ---
 

@@ -17,6 +17,8 @@ export default function RootLayout() {
     'Outfit-Bold': require('../assets/fonts/Outfit-Regular.ttf'),
     'JetBrainsMono-Regular': require('../assets/fonts/JetBrainsMono-Regular.ttf'),
     'JetBrainsMono-Bold': require('../assets/fonts/JetBrainsMono-Bold.ttf'),
+    'OpenDyslexic-Regular': require('../assets/fonts/OpenDyslexic-Regular.otf'),
+    'OpenDyslexic-Bold': require('../assets/fonts/OpenDyslexic-Bold.otf'),
   });
 
   const [dbReady, setDbReady] = useState(false);

@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
-import { Colors, FontFamily, FontSize, Spacing, Radius } from '../constants/theme';
+import { Colors, FontSize, Spacing, Radius } from '../constants/theme';
 import type { FallingBrick } from '../engine/bricks';
+import { useFontFamily } from '../store/progressStore';
 
 interface Props {
   score: number;
@@ -24,6 +25,10 @@ export default function HUD({
 }: Props) {
   const streakAnim = useRef(new Animated.Value(0)).current;
 
+  // Typography for dyslexia accessibility
+  const headingFont = useFontFamily('heading');
+  const bodyFont = useFontFamily('body');
+
   useEffect(() => {
     if (isHotStreak) {
       Animated.spring(streakAnim, { toValue: 1, useNativeDriver: true, tension: 80, friction: 6 }).start();
@@ -39,16 +44,16 @@ export default function HUD({
       {/* Top row — score & level */}
       <View style={styles.topRow}>
         <View style={styles.statBox}>
-          <Text style={styles.statLabel}>SCORE</Text>
-          <Text style={styles.statValue}>{score.toLocaleString()}</Text>
+          <Text style={[styles.statLabel, { fontFamily: bodyFont }]}>SCORE</Text>
+          <Text style={[styles.statValue, { fontFamily: headingFont }]}>{score.toLocaleString()}</Text>
         </View>
         <View style={styles.statBox}>
-          <Text style={styles.statLabel}>LEVEL</Text>
-          <Text style={styles.statValue}>{level}</Text>
+          <Text style={[styles.statLabel, { fontFamily: bodyFont }]}>LEVEL</Text>
+          <Text style={[styles.statValue, { fontFamily: headingFont }]}>{level}</Text>
         </View>
         <View style={styles.statBox}>
-          <Text style={styles.statLabel}>COMBO</Text>
-          <Text style={[styles.statValue, combo > 0 && styles.comboActive]}>
+          <Text style={[styles.statLabel, { fontFamily: bodyFont }]}>COMBO</Text>
+          <Text style={[styles.statValue, combo > 0 && styles.comboActive, { fontFamily: headingFont }]}>
             {combo > 0 ? `×${combo}` : '—'}
           </Text>
         </View>
@@ -57,7 +62,7 @@ export default function HUD({
       {/* Hot Streak banner */}
       {isHotStreak && (
         <Animated.View style={[styles.streakBanner, { transform: [{ scale: streakScale }] }]}>
-          <Text style={styles.streakText}>🔥 HOT STREAK! ×2 SCORE</Text>
+          <Text style={[styles.streakText, { fontFamily: headingFont }]}>🔥 HOT STREAK! ×2 SCORE</Text>
         </Animated.View>
       )}
 
@@ -69,7 +74,7 @@ export default function HUD({
               🧊
             </Text>
           ))}
-          <Text style={styles.tokenLabel}>Freeze</Text>
+          <Text style={[styles.tokenLabel, { fontFamily: bodyFont }]}>Freeze</Text>
         </View>
         <View style={styles.tokenGroup}>
           {Array.from({ length: 3 }).map((_, i) => (
@@ -77,7 +82,7 @@ export default function HUD({
               💡
             </Text>
           ))}
-          <Text style={styles.tokenLabel}>Hints</Text>
+          <Text style={[styles.tokenLabel, { fontFamily: bodyFont }]}>Hints</Text>
         </View>
       </View>
     </View>
@@ -106,13 +111,11 @@ const styles = StyleSheet.create({
   statLabel: {
     color: Colors.muted,
     fontSize: FontSize.xs,
-    fontFamily: FontFamily.body,
     letterSpacing: 1,
   },
   statValue: {
     color: Colors.white,
     fontSize: FontSize.lg,
-    fontFamily: FontFamily.heading,
     marginTop: 2,
   },
   comboActive: {
@@ -127,7 +130,6 @@ const styles = StyleSheet.create({
   streakText: {
     color: Colors.white,
     fontSize: FontSize.md,
-    fontFamily: FontFamily.heading,
     letterSpacing: 0.5,
   },
   tokensRow: {
@@ -152,7 +154,6 @@ const styles = StyleSheet.create({
   tokenLabel: {
     color: Colors.muted,
     fontSize: FontSize.xs,
-    fontFamily: FontFamily.body,
     marginLeft: Spacing.xs,
   },
 });

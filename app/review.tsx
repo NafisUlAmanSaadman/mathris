@@ -8,12 +8,13 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useProgressStore } from '../store/progressStore';
+import { useProgressStore, useFontFamily } from '../store/progressStore';
 import { useGameStore } from '../store/gameStore';
 import type { WrongAnswerEntry } from '../data/repository';
 import StarRating from '../components/StarRating';
-import { Colors, FontFamily, FontSize, Spacing, Radius } from '../constants/theme';
+import { Colors, FontSize, Spacing, Radius } from '../constants/theme';
 import { STARS } from '../constants/config';
+import { triggerImpactHaptic } from '../utils/haptics';
 
 function computeStars(accuracy: number): number {
   if (accuracy >= STARS.three) return 3;
@@ -26,6 +27,13 @@ export default function ReviewScreen() {
   const { score, resetGame } = useGameStore();
   const { wrongAnswerLog, sessionHistory, clearWrongLog } = useProgressStore();
 
+  // Typography for dyslexia accessibility
+  const headingFont = useFontFamily('heading');
+  const headingMediumFont = useFontFamily('headingMedium');
+  const bodyFont = useFontFamily('body');
+  const monoFont = useFontFamily('mono');
+  const monoBoldFont = useFontFamily('monoBold');
+
   const lastSession = sessionHistory[0];
   const accuracy = lastSession?.accuracy ?? 1;
   const stars = computeStars(accuracy);
@@ -36,12 +44,24 @@ export default function ReviewScreen() {
   );
 
   const handlePlayAgain = () => {
+    triggerImpactHaptic();
     resetGame();
     router.replace('/game');
   };
 
   const handleMenu = () => {
+    triggerImpactHaptic();
     router.replace('/');
+  };
+
+  const handleClear = () => {
+    triggerImpactHaptic();
+    clearWrongLog();
+  };
+
+  const handleDashboard = () => {
+    triggerImpactHaptic();
+    router.push('/dashboard');
   };
 
   return (
@@ -49,10 +69,10 @@ export default function ReviewScreen() {
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         {/* Game over header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Game Over</Text>
+          <Text style={[styles.title, { fontFamily: bodyFont }]}>Game Over</Text>
           <StarRating count={stars} />
-          <Text style={styles.score}>{score.toLocaleString()} pts</Text>
-          <Text style={styles.accuracy}>
+          <Text style={[styles.score, { fontFamily: headingFont }]}>{score.toLocaleString()} pts</Text>
+          <Text style={[styles.accuracy, { fontFamily: bodyFont }]}>
             {Math.round(accuracy * 100)}% accuracy
           </Text>
         </View>
@@ -60,58 +80,58 @@ export default function ReviewScreen() {
         {/* CTA buttons */}
         <View style={styles.buttonRow}>
           <TouchableOpacity style={styles.playAgainBtn} onPress={handlePlayAgain}>
-            <Text style={styles.playAgainText}>▶  Play Again</Text>
+            <Text style={[styles.playAgainText, { fontFamily: headingFont }]}>▶  Play Again</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.menuBtn} onPress={handleMenu}>
-            <Text style={styles.menuBtnText}>Menu</Text>
+            <Text style={[styles.menuBtnText, { fontFamily: headingMediumFont }]}>Menu</Text>
           </TouchableOpacity>
         </View>
 
         {/* Wrong answer review */}
         {sessionWrong.length > 0 ? (
           <View style={styles.reviewSection}>
-            <Text style={styles.reviewTitle}>Let's look at these together 🤝</Text>
-            <Text style={styles.reviewSubtitle}>
+            <Text style={[styles.reviewTitle, { fontFamily: headingFont }]}>Let's look at these together 🤝</Text>
+            <Text style={[styles.reviewSubtitle, { fontFamily: bodyFont }]}>
               {sessionWrong.length} equation{sessionWrong.length !== 1 ? 's' : ''} to revisit
             </Text>
             {sessionWrong.map((entry, i) => (
               <View key={i} style={styles.wrongCard}>
-                <Text style={styles.wrongEquation}>{entry.equation}</Text>
+                <Text style={[styles.wrongEquation, { fontFamily: monoFont }]}>{entry.equation}</Text>
                 <View style={styles.wrongAnswerRow}>
                   <View style={styles.wrongAnswerBox}>
-                    <Text style={styles.wrongAnswerLabel}>Your answer</Text>
-                    <Text style={[styles.wrongAnswerValue, { color: Colors.danger }]}>
+                    <Text style={[styles.wrongAnswerLabel, { fontFamily: bodyFont }]}>Your answer</Text>
+                    <Text style={[styles.wrongAnswerValue, { color: Colors.danger, fontFamily: monoBoldFont }]}>
                       {entry.userAnswer || '—'}
                     </Text>
                   </View>
-                  <Text style={styles.wrongArrow}>→</Text>
+                  <Text style={[styles.wrongArrow, { fontFamily: monoFont }]}>→</Text>
                   <View style={styles.wrongAnswerBox}>
-                    <Text style={styles.wrongAnswerLabel}>Correct answer</Text>
-                    <Text style={[styles.wrongAnswerValue, { color: Colors.success }]}>
+                    <Text style={[styles.wrongAnswerLabel, { fontFamily: bodyFont }]}>Correct answer</Text>
+                    <Text style={[styles.wrongAnswerValue, { color: Colors.success, fontFamily: monoBoldFont }]}>
                       {entry.correctAnswer}
                     </Text>
                   </View>
                 </View>
               </View>
             ))}
-            <TouchableOpacity style={styles.clearBtn} onPress={clearWrongLog}>
-              <Text style={styles.clearBtnText}>Clear review list</Text>
+            <TouchableOpacity style={styles.clearBtn} onPress={handleClear}>
+              <Text style={[styles.clearBtnText, { fontFamily: bodyFont }]}>Clear review list</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <View style={styles.perfectBox}>
             <Text style={styles.perfectEmoji}>🎉</Text>
-            <Text style={styles.perfectTitle}>Perfect round!</Text>
-            <Text style={styles.perfectSubtitle}>No mistakes this session.</Text>
+            <Text style={[styles.perfectTitle, { fontFamily: headingFont }]}>Perfect round!</Text>
+            <Text style={[styles.perfectSubtitle, { fontFamily: bodyFont }]}>No mistakes this session.</Text>
           </View>
         )}
 
         {/* Dashboard link */}
         <TouchableOpacity
           style={styles.dashboardBtn}
-          onPress={() => router.push('/dashboard')}
+          onPress={handleDashboard}
         >
-          <Text style={styles.dashboardBtnText}>📊 View Full Progress Dashboard</Text>
+          <Text style={[styles.dashboardBtnText, { fontFamily: headingMediumFont }]}>📊 View Full Progress Dashboard</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -133,20 +153,17 @@ const styles = StyleSheet.create({
   title: {
     color: Colors.muted,
     fontSize: FontSize.md,
-    fontFamily: FontFamily.body,
     letterSpacing: 3,
     textTransform: 'uppercase',
   },
   score: {
     color: Colors.white,
     fontSize: FontSize.hero,
-    fontFamily: FontFamily.heading,
     marginTop: Spacing.sm,
   },
   accuracy: {
     color: Colors.muted,
     fontSize: FontSize.md,
-    fontFamily: FontFamily.body,
   },
   buttonRow: {
     flexDirection: 'row',
@@ -162,7 +179,6 @@ const styles = StyleSheet.create({
   playAgainText: {
     color: Colors.white,
     fontSize: FontSize.lg,
-    fontFamily: FontFamily.heading,
   },
   menuBtn: {
     flex: 1,
@@ -176,7 +192,6 @@ const styles = StyleSheet.create({
   menuBtnText: {
     color: Colors.offWhite,
     fontSize: FontSize.lg,
-    fontFamily: FontFamily.headingMedium,
   },
   reviewSection: {
     gap: Spacing.md,
@@ -184,12 +199,10 @@ const styles = StyleSheet.create({
   reviewTitle: {
     color: Colors.white,
     fontSize: FontSize.xl,
-    fontFamily: FontFamily.heading,
   },
   reviewSubtitle: {
     color: Colors.muted,
     fontSize: FontSize.sm,
-    fontFamily: FontFamily.body,
   },
   wrongCard: {
     backgroundColor: Colors.bgCard,
@@ -202,7 +215,6 @@ const styles = StyleSheet.create({
   wrongEquation: {
     color: Colors.offWhite,
     fontSize: FontSize.lg,
-    fontFamily: FontFamily.mono,
   },
   wrongAnswerRow: {
     flexDirection: 'row',
@@ -219,17 +231,14 @@ const styles = StyleSheet.create({
   wrongAnswerLabel: {
     color: Colors.muted,
     fontSize: FontSize.xs,
-    fontFamily: FontFamily.body,
   },
   wrongAnswerValue: {
     fontSize: FontSize.lg,
-    fontFamily: FontFamily.monoBold,
     marginTop: 2,
   },
   wrongArrow: {
     color: Colors.muted,
     fontSize: FontSize.lg,
-    fontFamily: FontFamily.mono,
   },
   clearBtn: {
     alignSelf: 'center',
@@ -239,7 +248,6 @@ const styles = StyleSheet.create({
   clearBtnText: {
     color: Colors.muted,
     fontSize: FontSize.sm,
-    fontFamily: FontFamily.body,
     textDecorationLine: 'underline',
   },
   perfectBox: {
@@ -255,12 +263,10 @@ const styles = StyleSheet.create({
   perfectTitle: {
     color: Colors.white,
     fontSize: FontSize.xxl,
-    fontFamily: FontFamily.heading,
   },
   perfectSubtitle: {
     color: Colors.muted,
     fontSize: FontSize.md,
-    fontFamily: FontFamily.body,
   },
   dashboardBtn: {
     backgroundColor: Colors.bgCard,
@@ -273,6 +279,5 @@ const styles = StyleSheet.create({
   dashboardBtnText: {
     color: Colors.offWhite,
     fontSize: FontSize.md,
-    fontFamily: FontFamily.headingMedium,
   },
 });

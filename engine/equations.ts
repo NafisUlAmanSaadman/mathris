@@ -211,6 +211,28 @@ function makeIntegerSystem(): Equation {
   };
 }
 
+function makeDecimalSystem(): Equation {
+  // Decimals system or simple decimal coefficient system
+  const X = rand(1, 5), Y = rand(1, 5);
+  const a = rand(1, 3) * 0.5, b = rand(1, 2);
+  const d = rand(1, 2), e = rand(1, 2);
+  const c = a * X + b * Y;
+  const f = d * X + e * Y;
+  return {
+    display: `${a.toFixed(1)}X + ${b}Y = ${c.toFixed(1)}\n${d}X + ${e}Y = ${f}`,
+    answer: `X=${X},Y=${Y}`,
+    topic: 'systems-decimal',
+    difficulty: 'hard',
+    hints: [
+      `Equation 1: ${a.toFixed(1)}X + ${b}Y = ${c.toFixed(1)}`,
+      `Equation 2: ${d}X + ${e}Y = ${f}`,
+      `Multiply Eq.1 by 2 to clear decimals: ${Math.round(a * 2)}X + ${b * 2}Y = ${Math.round(c * 2)}`,
+      `Solve for X or Y by substitution or elimination`,
+      `Answer: X=${X}, Y=${Y}`,
+    ],
+  };
+}
+
 // ─── Public API ──────────────────────────────────────────────────────────────
 
 export function generateEquation(
@@ -235,7 +257,10 @@ export function generateEquation(
   }
 
   // hard
-  return makeIntegerSystem();
+  const generators = [makeIntegerSystem, makeDecimalSystem];
+  if (topic === 'systems-integer') return makeIntegerSystem();
+  if (topic === 'systems-decimal') return makeDecimalSystem();
+  return shuffle(generators)[0]();
 }
 
 /**

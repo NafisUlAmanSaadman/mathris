@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { getRepository } from '../data/repositoryProvider';
 import type { MasteryEntry, WrongAnswerEntry, SessionRecord } from '../data/repository';
 import { XP_PER_LEVEL } from '../constants/config';
+import { FontFamily } from '../constants/theme';
 
 // ─── State shape ─────────────────────────────────────────────────────────────
 
@@ -13,6 +14,11 @@ export interface ProgressState {
   masteryByTopic: Record<string, MasteryEntry>;
   wrongAnswerLog: WrongAnswerEntry[];
   sessionHistory: SessionRecord[];
+
+  // Settings / Accessibility
+  dyslexiaFontEnabled: boolean;
+  adaptiveModeEnabled: boolean;
+  hapticsEnabled: boolean;
 
   /** True once the initial DB load has completed */
   loaded: boolean;
@@ -33,6 +39,15 @@ export interface ProgressState {
 
   /** Add XP and recompute level */
   addXP: (amount: number) => Promise<void>;
+
+  /** Toggle dyslexia-friendly font setting */
+  toggleDyslexiaFont: () => Promise<void>;
+
+  /** Toggle adaptive practice mode */
+  toggleAdaptiveMode: () => Promise<void>;
+
+  /** Toggle haptic feedback setting */
+  toggleHaptics: () => Promise<void>;
 
   /** Clear the wrong-answer log */
   clearWrongLog: () => Promise<void>;
@@ -56,19 +71,25 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
   masteryByTopic: {},
   wrongAnswerLog: [],
   sessionHistory: [],
+  dyslexiaFontEnabled: false,
+  adaptiveModeEnabled: false,
+  hapticsEnabled: true,
   loaded: false,
 
   // ── load ──────────────────────────────────────────────────────────────────
 
   load: async () => {
     const repo = getRepository();
-    const [xp, totalGames, masteryByTopic, wrongAnswerLog, sessionHistory] =
+    const [xp, totalGames, masteryByTopic, wrongAnswerLog, sessionHistory, dyslexiaRaw, adaptiveRaw, hapticsRaw] =
       await Promise.all([
         repo.getXP(),
         repo.getTotalGames(),
         repo.getMasteryByTopic(),
         repo.getWrongAnswers(200),
         repo.getSessions(30),
+        repo.getPreference('dyslexia_font', 'false'),
+        repo.getPreference('adaptive_mode', 'false'),
+        repo.getPreference('haptics_enabled', 'true'),
       ]);
 
     set({
@@ -78,6 +99,9 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       masteryByTopic,
       wrongAnswerLog,
       sessionHistory,
+      dyslexiaFontEnabled: dyslexiaRaw === 'true',
+      adaptiveModeEnabled: adaptiveRaw === 'true',
+      hapticsEnabled: hapticsRaw === 'true',
       loaded: true,
     });
   },
@@ -153,6 +177,30 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     });
   },
 
+  // ── toggleDyslexiaFont ────────────────────────────────────────────────────
+
+  toggleDyslexiaFont: async () => {
+    const nextVal = !get().dyslexiaFontEnabled;
+    await getRepository().setPreference('dyslexia_font', String(nextVal));
+    set({ dyslexiaFontEnabled: nextVal });
+  },
+
+  // ── toggleAdaptiveMode ────────────────────────────────────────────────────
+
+  toggleAdaptiveMode: async () => {
+    const nextVal = !get().adaptiveModeEnabled;
+    await getRepository().setPreference('adaptive_mode', String(nextVal));
+    set({ adaptiveModeEnabled: nextVal });
+  },
+
+  // ── toggleHaptics ─────────────────────────────────────────────────────────
+
+  toggleHaptics: async () => {
+    const nextVal = !get().hapticsEnabled;
+    await getRepository().setPreference('haptics_enabled', String(nextVal));
+    set({ hapticsEnabled: nextVal });
+  },
+
   // ── clearWrongLog ─────────────────────────────────────────────────────────
 
   clearWrongLog: async () => {
@@ -174,3 +222,16 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     });
   },
 }));
+
+// ─── useFontFamily Hook ────────────────────────────────────────────────────────
+
+export function useFontFamily(type: keyof typeof FontFamily): string {
+  const dyslexiaFontEnabled = useProgressStore(s => s.dyslexiaFontEnabled);
+  if (dyslexiaFontEnabled) {
+    if (type === 'heading' || type === 'monoBold') {
+      return 'OpenDyslexic-Bold';
+    }
+    return 'OpenDyslexic-Regular';
+  }
+  return FontFamily[type];
+}

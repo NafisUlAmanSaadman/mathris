@@ -84,6 +84,14 @@ export interface IRepository {
   /** Delete all wrong-answer records */
   clearWrongAnswers(): Promise<void>;
 
+  // ── Preferences / Settings ───────────────────────────────────────────────────
+
+  /** Get a preference value, fallback to defaultValue if not set */
+  getPreference(key: string, defaultValue: string): Promise<string>;
+
+  /** Set a preference value */
+  setPreference(key: string, value: string): Promise<void>;
+
   // ── Housekeeping ─────────────────────────────────────────────────────────────
 
   /** Wipe ALL data (used for dev/reset) */
