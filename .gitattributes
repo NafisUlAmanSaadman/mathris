@@ -1,0 +1,20 @@
+# Normalize line endings across platforms
+* text=auto eol=lf
+
+# Binary files — never convert
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.ttf binary
+*.otf binary
+*.mp3 binary
+*.mp4 binary
+*.wav binary
+*.webp binary
+*.jks binary
+*.p8 binary
+*.p12 binary
+*.key binary
+*.mobileprovision binary
