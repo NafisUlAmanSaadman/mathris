@@ -20,6 +20,8 @@ export default function GameBoard({ grid, currentBrick, wrongFlash }: Props) {
   const cellSize = Math.floor(boardWidth / GRID_COLS);
   const boardHeight = cellSize * GRID_ROWS;
 
+  const font = useFont(require('../assets/fonts/JetBrainsMono-Bold.ttf'), 10);
+
   const ghostRow = useMemo(
     () => (currentBrick ? getGhostRow(grid, currentBrick) : null),
     [grid, currentBrick],
@@ -113,7 +115,7 @@ export default function GameBoard({ grid, currentBrick, wrongFlash }: Props) {
             x={brickPixelX + 4}
             y={brickPixelY + cellSize * 0.55 + i * 12}
             text={line}
-            font={null}
+            font={font}
             color={Colors.white}
           />
         ));
@@ -121,3 +123,4 @@ export default function GameBoard({ grid, currentBrick, wrongFlash }: Props) {
     </Canvas>
   );
 }
+
