@@ -65,12 +65,70 @@ export default function MenuScreen() {
       {/* 60fps Skia Rain in background */}
       <MenuSkiaRain />
 
+      {/* Scattered background math symbols */}
+      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        <Text style={[styles.bgSymbol, { top: '10%', left: '8%', fontSize: 24, fontFamily: monoBoldFont }]}>x² + y²</Text>
+        <Text style={[styles.bgSymbol, { top: '18%', right: '12%', fontSize: 28, fontFamily: monoBoldFont }]}>π</Text>
+        <Text style={[styles.bgSymbol, { top: '38%', left: '15%', fontSize: 22, fontFamily: monoBoldFont }]}>Σ</Text>
+        <Text style={[styles.bgSymbol, { top: '55%', right: '8%', fontSize: 26, fontFamily: monoBoldFont }]}>√π</Text>
+        <Text style={[styles.bgSymbol, { top: '78%', left: '10%', fontSize: 24, fontFamily: monoBoldFont }]}>÷</Text>
+        <Text style={[styles.bgSymbol, { top: '88%', right: '15%', fontSize: 22, fontFamily: monoBoldFont }]}>+</Text>
+      </View>
+
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Title / Hero */}
-        <View style={styles.hero}>
-          <Text style={[styles.title, { fontFamily: headingFont }]}>MATHRIS</Text>
-          <View style={styles.titleLine} />
-          <Text style={[styles.subtitle, { fontFamily: bodyFont }]}>TETRIS × MATHEMATICS</Text>
+        {/* Shield Badge Container */}
+        <View style={styles.badgeContainer}>
+          <View style={styles.badgeBorder}>
+            <View style={styles.badgeContent}>
+              {/* Floating Tetris Blocks inside the Badge */}
+              <View style={styles.floatingBlocks}>
+                {/* L Block (orange) */}
+                <View style={[styles.block, { backgroundColor: Colors.brickL, top: 12, left: 30 }]}>
+                  <Text style={[styles.blockText, { fontFamily: monoBoldFont }]}>3+2</Text>
+                </View>
+                
+                {/* J Block (blue) */}
+                <View style={[styles.block, { backgroundColor: Colors.brickJ, top: 48, left: 105 }]}>
+                  <Text style={[styles.blockText, { fontFamily: monoBoldFont }]}>5×4</Text>
+                </View>
+
+                {/* S Block (green) */}
+                <View style={[styles.block, { backgroundColor: Colors.brickS, top: 22, left: 180 }]}>
+                  <Text style={[styles.blockText, { fontFamily: monoBoldFont }]}>10-6</Text>
+                </View>
+              </View>
+
+              {/* Colorful Title "MATHRIS" */}
+              <View style={styles.titleContainer}>
+                {[
+                  { char: 'M', color: '#F09A37' },
+                  { char: 'A', color: '#37C4D8' },
+                  { char: 'T', color: '#6BBF8A' },
+                  { char: 'H', color: '#E8735A' },
+                  { char: 'R', color: '#E8A94B' },
+                  { char: 'I', color: '#5B8FD9' },
+                  { char: 'S', color: '#B07CD8' },
+                ].map((item, idx) => (
+                  <Text
+                    key={idx}
+                    style={[
+                      styles.titleChar,
+                      { color: item.color, fontFamily: headingFont },
+                    ]}
+                  >
+                    {item.char}
+                  </Text>
+                ))}
+              </View>
+
+              {/* Tagline Banner */}
+              <View style={styles.taglineBanner}>
+                <Text style={[styles.taglineText, { fontFamily: headingMediumFont }]}>
+                  PLAY. SOLVE. BLOCK!
+                </Text>
+              </View>
+            </View>
+          </View>
         </View>
 
         {/* Stats Strip */}
@@ -235,28 +293,94 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.xxxl,
     gap: Spacing.xl,
   },
-  hero: {
+  bgSymbol: {
+    position: 'absolute',
+    color: Colors.bgBorder,
+    opacity: 0.15,
+  },
+  badgeContainer: {
     alignItems: 'center',
-    paddingTop: Spacing.xxl,
+    paddingTop: Spacing.xl,
     paddingBottom: Spacing.md,
   },
-  title: {
+  badgeBorder: {
+    borderWidth: 3,
+    borderColor: '#37C4D8', // Bright retro cyan border
+    borderRadius: Radius.xl,
+    padding: 6,
+    // Soft cyan glow
+    shadowColor: '#37C4D8',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 15,
+    elevation: 8,
+  },
+  badgeContent: {
+    backgroundColor: '#1E2433', // Graphite/Card background
+    borderRadius: Radius.lg,
+    paddingHorizontal: Spacing.xl,
+    paddingTop: 100, // Make room for floating blocks
+    paddingBottom: Spacing.xl,
+    alignItems: 'center',
+    width: 280,
+    height: 250,
+    justifyContent: 'flex-end',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  floatingBlocks: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 120,
+  },
+  block: {
+    position: 'absolute',
+    width: 60,
+    height: 30,
+    borderRadius: Radius.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(232, 228, 220, 0.3)',
+    // Soft drop shadow on blocks
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  blockText: {
     color: Colors.white,
-    fontSize: FontSize.hero,
-    letterSpacing: 10,
-    textAlign: 'center',
+    fontSize: FontSize.xs,
   },
-  titleLine: {
-    height: 1,
-    backgroundColor: Colors.primary,
-    width: 80,
-    marginVertical: Spacing.md,
-    opacity: 0.8,
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.md,
   },
-  subtitle: {
-    color: Colors.muted,
-    fontSize: FontSize.sm,
-    letterSpacing: 3,
+  titleChar: {
+    fontSize: 34,
+    letterSpacing: 2,
+    fontWeight: 'bold',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 3,
+  },
+  taglineBanner: {
+    backgroundColor: Colors.bg,
+    borderRadius: Radius.full,
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    borderWidth: 1,
+    borderColor: '#37C4D8',
+  },
+  taglineText: {
+    color: Colors.white,
+    fontSize: 10,
+    letterSpacing: 1.5,
     textAlign: 'center',
   },
   statsStrip: {
