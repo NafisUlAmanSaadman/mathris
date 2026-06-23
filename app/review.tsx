@@ -35,7 +35,7 @@ export default function ReviewScreen() {
   const monoBoldFont = useFontFamily('monoBold');
 
   const lastSession = sessionHistory[0];
-  const accuracy = lastSession?.accuracy ?? 1;
+  const accuracy = lastSession?.accuracy ?? 0;
   const stars = computeStars(accuracy);
 
   // Wrong answers from the most recent session (last hour)

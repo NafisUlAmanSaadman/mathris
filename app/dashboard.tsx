@@ -45,6 +45,11 @@ export default function DashboardScreen() {
   const mlModel = useMemo(() => new MathMasteryModel(), []);
   const mlReport = useMemo(() => mlModel.train(masteryByTopic), [masteryByTopic]);
 
+  // Compute stats directly from practice history
+  const totalAttempts = useMemo(() => Object.values(masteryByTopic).reduce((sum, v) => sum + v.attempts, 0), [masteryByTopic]);
+  const totalCorrect = useMemo(() => Object.values(masteryByTopic).reduce((sum, v) => sum + v.correct, 0), [masteryByTopic]);
+  const avgAccuracy = useMemo(() => totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0, [totalAttempts, totalCorrect]);
+
   // Build accuracy by topic data
   const topicEntries = Object.entries(masteryByTopic).slice(0, 6);
   const topicLabels = topicEntries.map(([k]) =>
@@ -105,31 +110,31 @@ export default function DashboardScreen() {
           ))}
         </View>
 
-        {/* On-Device ML Diagnostic Report */}
+        {/* Historical Stats & Struggle Rates */}
         <View style={styles.mlSection}>
           <Text style={[styles.sectionTitle, { fontFamily: headingFont }]}>Learning Profile</Text>
           <View style={styles.mlInfoBox}>
             <View style={styles.mlMetricsRow}>
               <View style={styles.mlMetricMini}>
-                <Text style={[styles.mlMetricLabel, { fontFamily: bodyFont }]}>Training Loss</Text>
-                <Text style={[styles.mlMetricValue, { fontFamily: monoBoldFont }]}>{mlReport.loss}</Text>
+                <Text style={[styles.mlMetricLabel, { fontFamily: bodyFont }]}>Total Attempts</Text>
+                <Text style={[styles.mlMetricValue, { fontFamily: monoBoldFont }]}>{totalAttempts}</Text>
               </View>
               <View style={styles.mlMetricMini}>
-                <Text style={[styles.mlMetricLabel, { fontFamily: bodyFont }]}>Observations</Text>
-                <Text style={[styles.mlMetricValue, { fontFamily: monoBoldFont }]}>{mlReport.totalSamples}</Text>
+                <Text style={[styles.mlMetricLabel, { fontFamily: bodyFont }]}>Correct Answers</Text>
+                <Text style={[styles.mlMetricValue, { fontFamily: monoBoldFont }]}>{totalCorrect}</Text>
               </View>
               <View style={styles.mlMetricMini}>
-                <Text style={[styles.mlMetricLabel, { fontFamily: bodyFont }]}>Epochs Run</Text>
-                <Text style={[styles.mlMetricValue, { fontFamily: monoBoldFont }]}>{mlReport.epochsRun}</Text>
+                <Text style={[styles.mlMetricLabel, { fontFamily: bodyFont }]}>Avg Accuracy</Text>
+                <Text style={[styles.mlMetricValue, { fontFamily: monoBoldFont }]}>{avgAccuracy}%</Text>
               </View>
             </View>
             <Text style={[styles.mlDescription, { fontFamily: bodyFont }]}>
-              Our on-device regression model predicts which equation topics you are most likely to struggle with next based on attempt history.
+              Your historical struggle rates per math topic, calculated directly from your practice answers.
             </Text>
           </View>
 
           {/* Predictions list */}
-          <Text style={[styles.sectionSubtitle, { fontFamily: headingMediumFont }]}>Predicted Struggle Rates (AI Forecast)</Text>
+          <Text style={[styles.sectionSubtitle, { fontFamily: headingMediumFont }]}>Predicted Struggle Rates</Text>
           <View style={styles.predictionsList}>
             {mlReport.predictions.map(pred => {
               const errorPct = Math.round(pred.predictedErrorRate * 100);

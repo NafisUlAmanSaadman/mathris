@@ -14,9 +14,11 @@ interface Props {
 }
 
 export default function GameBoard({ grid, currentBrick, wrongFlash }: Props) {
-  const { width } = useWindowDimensions();
-  const boardWidth = Math.floor(width * 0.8);
-  const cellSize = Math.floor(boardWidth / GRID_COLS);
+  const { width, height } = useWindowDimensions();
+  const maxCellWidth = Math.floor((width * 0.8) / GRID_COLS);
+  const maxCellHeight = Math.floor((height * 0.42) / GRID_ROWS); // Board takes at most ~42% of height
+  const cellSize = Math.min(maxCellWidth, maxCellHeight, 40);
+  const boardWidth = cellSize * GRID_COLS;
   const boardHeight = cellSize * GRID_ROWS;
 
   const ghostRow = useMemo(

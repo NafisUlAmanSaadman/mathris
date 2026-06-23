@@ -38,6 +38,7 @@ import {
   HINT_SCORE_COST,
   COMBO_MULTIPLIER,
   MAX_RETRIES,
+  GRID_COLS,
 } from '../constants/config';
 import { Colors, FontSize, Spacing, Radius } from '../constants/theme';
 
@@ -130,9 +131,27 @@ export default function GameScreen() {
     }
 
     const tetro = randomTetromino();
-    const brick = createFallingBrick(tetro, eq, 3, baseInterval);
+    
+    // Choose a random starting column that keeps the tetromino within bounds
+    const maxStartCol = GRID_COLS - tetro.matrix.length;
+    const cols = Array.from({ length: maxStartCol + 1 }, (_, i) => i);
+    
+    // Shuffle possible start columns to find a valid one
+    for (let i = cols.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [cols[i], cols[j]] = [cols[j], cols[i]];
+    }
 
-    if (!isValidPosition(gridRef.current, brick)) {
+    let brick = null;
+    for (const startCol of cols) {
+      const candidate = createFallingBrick(tetro, eq, startCol, baseInterval);
+      if (isValidPosition(gridRef.current, candidate)) {
+        brick = candidate;
+        break;
+      }
+    }
+
+    if (!brick) {
       endGame();
       return;
     }
@@ -331,7 +350,7 @@ export default function GameScreen() {
       w => Date.now() - w.timestamp < 3_600_000,
     ).length;
     const sessionTotal = sessionCorrect + sessionWrong;
-    const accuracy = sessionTotal > 0 ? sessionCorrect / sessionTotal : 1;
+    const accuracy = sessionTotal > 0 ? sessionCorrect / sessionTotal : 0;
 
     // Persist session and XP — async, no need to await before navigating
     recordSession(score, accuracy);
@@ -380,17 +399,17 @@ export default function GameScreen() {
         nextBrick={nextBrick}
       />
 
-      {/* Board */}
-      <View style={styles.boardWrapper}>
-        <GameBoard grid={grid} currentBrick={currentBrick} wrongFlash={wrongAnswerFlash} />
-      </View>
-
       {/* Equation Chalk Strip */}
       <View style={styles.chalkStrip}>
         <Text style={[styles.chalkLabel, { fontFamily: bodyFont }]}>EQUATION</Text>
         <Text style={[styles.chalkEquation, { fontFamily: monoBoldFont }]}>
           {currentBrick ? currentBrick.equation.display.replace(/\n/g, '   |   ') : '—'}
         </Text>
+      </View>
+
+      {/* Board */}
+      <View style={styles.boardWrapper}>
+        <GameBoard grid={grid} currentBrick={currentBrick} wrongFlash={wrongAnswerFlash} />
       </View>
 
       {/* Feedback banner */}
