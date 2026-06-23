@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Canvas, Rect, Text as SkiaText, useFont, Group, Paint, RoundedRect } from '@shopify/react-native-skia';
+import { Canvas, RoundedRect } from '@shopify/react-native-skia';
 import { useWindowDimensions } from 'react-native';
 import { GRID_COLS, GRID_ROWS } from '../constants/config';
 import { Colors } from '../constants/theme';
@@ -15,12 +15,9 @@ interface Props {
 
 export default function GameBoard({ grid, currentBrick, wrongFlash }: Props) {
   const { width } = useWindowDimensions();
-  // Board takes 80% of screen width
   const boardWidth = Math.floor(width * 0.8);
   const cellSize = Math.floor(boardWidth / GRID_COLS);
   const boardHeight = cellSize * GRID_ROWS;
-
-  const font = useFont(require('../assets/fonts/JetBrainsMono-Bold.ttf'), 10);
 
   const ghostRow = useMemo(
     () => (currentBrick ? getGhostRow(grid, currentBrick) : null),
@@ -34,7 +31,7 @@ export default function GameBoard({ grid, currentBrick, wrongFlash }: Props) {
 
   return (
     <Canvas style={{ width: boardWidth, height: boardHeight }}>
-      {/* Background grid */}
+      {/* Background grid — dark board cells */}
       {Array.from({ length: GRID_ROWS }).map((_, r) =>
         Array.from({ length: GRID_COLS }).map((__, c) => (
           <RoundedRect
@@ -44,7 +41,7 @@ export default function GameBoard({ grid, currentBrick, wrongFlash }: Props) {
             width={cellSize - 2}
             height={cellSize - 2}
             r={2}
-            color={Colors.bgSurface}
+            color={Colors.board}
           />
         )),
       )}
@@ -79,7 +76,7 @@ export default function GameBoard({ grid, currentBrick, wrongFlash }: Props) {
               width={cellSize - 2}
               height={cellSize - 2}
               r={3}
-              color={currentBrick.tetromino.color + '40'}
+              color={currentBrick.tetromino.color + '30'}
             />
           );
         })}
@@ -97,30 +94,6 @@ export default function GameBoard({ grid, currentBrick, wrongFlash }: Props) {
             color={wrongFlash ? Colors.danger : currentBrick.tetromino.color}
           />
         ))}
-
-      {/* Equation label on brick — centred on the brick's bounding box */}
-      {currentBrick && (() => {
-        const cells = currentCells;
-        if (!cells.length) return null;
-        const minCol = Math.min(...cells.map(c => c.col));
-        const maxCol = Math.max(...cells.map(c => c.col));
-        const minRow = Math.min(...cells.map(c => c.row));
-        const brickPixelX = minCol * cellSize;
-        const brickPixelY = minRow * cellSize;
-        const brickW = (maxCol - minCol + 1) * cellSize;
-        const lines = currentBrick.equation.display.split('\n');
-        return lines.map((line, i) => (
-          <SkiaText
-            key={`eq-${i}`}
-            x={brickPixelX + 4}
-            y={brickPixelY + cellSize * 0.55 + i * 12}
-            text={line}
-            font={font}
-            color={Colors.white}
-          />
-        ));
-      })()}
     </Canvas>
   );
 }
-

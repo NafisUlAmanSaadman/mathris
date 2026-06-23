@@ -19,7 +19,7 @@ import { triggerImpactHaptic } from '../utils/haptics';
 const CHART_CONFIG = {
   backgroundGradientFrom: Colors.bgCard,
   backgroundGradientTo: Colors.bgCard,
-  color: (opacity = 1) => `rgba(108, 99, 255, ${opacity})`,
+  color: (opacity = 1) => `rgba(232, 115, 90, ${opacity})`, // coral color
   labelColor: () => Colors.muted,
   strokeWidth: 2,
   barPercentage: 0.6,
@@ -95,8 +95,8 @@ export default function DashboardScreen() {
           {[
             { label: 'Level', value: `${level}` },
             { label: 'Total XP', value: xp.toLocaleString() },
-            { label: 'Games', value: `${totalGames}` },
-            { label: 'Accuracy', value: `${overallAccuracy}%` },
+            { label: 'Games Played', value: `${totalGames}` },
+            { label: 'Avg Accuracy', value: `${overallAccuracy}%` },
           ].map(({ label, value }) => (
             <View key={label} style={styles.overviewCard}>
               <Text style={[styles.overviewValue, { fontFamily: headingFont }]}>{value}</Text>
@@ -107,7 +107,7 @@ export default function DashboardScreen() {
 
         {/* On-Device ML Diagnostic Report */}
         <View style={styles.mlSection}>
-          <Text style={[styles.sectionTitle, { fontFamily: headingFont }]}>🤖 ML Learning Profile</Text>
+          <Text style={[styles.sectionTitle, { fontFamily: headingFont }]}>Learning Profile</Text>
           <View style={styles.mlInfoBox}>
             <View style={styles.mlMetricsRow}>
               <View style={styles.mlMetricMini}>
@@ -124,7 +124,7 @@ export default function DashboardScreen() {
               </View>
             </View>
             <Text style={[styles.mlDescription, { fontFamily: bodyFont }]}>
-              Our on-device Logistic Regression Model predicts which equation topics you are most likely to struggle with next based on attempt history.
+              Our on-device regression model predicts which equation topics you are most likely to struggle with next based on attempt history.
             </Text>
           </View>
 
@@ -195,7 +195,7 @@ export default function DashboardScreen() {
         {/* Weakest topics */}
         {weakTopics.length > 0 && (
           <View style={styles.weakSection}>
-            <Text style={[styles.sectionTitle, { fontFamily: headingFont }]}>📌 Needs Practice</Text>
+            <Text style={[styles.sectionTitle, { fontFamily: headingFont }]}>Needs Practice</Text>
             {weakTopics.map(({ topic, accuracy }) => (
               <View key={topic} style={styles.weakCard}>
                 <Text style={[styles.weakTopic, { fontFamily: bodyFont }]}>{topic.replace(/-/g, ' ')}</Text>
@@ -257,6 +257,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.bgBorder,
   },
   backBtnText: {
     color: Colors.offWhite,
@@ -301,6 +303,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: Colors.offWhite,
     fontSize: FontSize.lg,
+    letterSpacing: 0.5,
   },
   sectionSubtitle: {
     color: Colors.muted,

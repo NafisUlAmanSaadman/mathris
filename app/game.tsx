@@ -58,9 +58,11 @@ export default function GameScreen() {
     score, addScore,
     level, linesCleared, incrementLines,
     combo, isHotStreak, incrementCombo, resetCombo,
+    correctCount, incrementCorrectCount,
     freezeTokens, hintTokens, useFreeze, useHint,
     wrongAnswerFlash, setWrongAnswerFlash,
     setClearedRows,
+    practiceTopic,
   } = useGameStore();
 
   const { recordCorrect, recordWrong, recordSession, addXP, adaptiveModeEnabled, masteryByTopic } = useProgressStore();
@@ -101,8 +103,10 @@ export default function GameScreen() {
     const baseInterval = TICK_INTERVAL_MS[difficulty];
     let eq;
 
-    // Use ML model if Adaptive Mode is enabled
-    if (adaptiveModeEnabled) {
+    if (practiceTopic) {
+      eq = generateEquation(difficulty, practiceTopic);
+    } else if (adaptiveModeEnabled) {
+      // Use ML model if Adaptive Mode is enabled
       const weightedList = mlModel.getWeightedTopicList(difficulty, masteryByTopic);
       if (weightedList.length > 0) {
         // Weighted random selection
@@ -133,7 +137,7 @@ export default function GameScreen() {
       return;
     }
     setCurrentBrick(brick);
-  }, [difficulty, adaptiveModeEnabled, masteryByTopic, levelUpActive]);
+  }, [difficulty, adaptiveModeEnabled, masteryByTopic, levelUpActive, practiceTopic]);
 
   // ─── Game Loop Tick ─────────────────────────────────────────────────────────
   const tick = useCallback(() => {
@@ -199,7 +203,7 @@ export default function GameScreen() {
 
   // ─── Answer Submit ──────────────────────────────────────────────────────────
   const handleAnswer = useCallback((input: string) => {
-    if (levelUpActive) return;
+    if (levelUpActive || phase !== 'playing') return;
     const brick = brickRef.current;
     if (!brick) return;
 
@@ -210,6 +214,7 @@ export default function GameScreen() {
       const pts = SCORE.lockCorrect * (isHotStreak ? COMBO_MULTIPLIER : 1);
       addScore(pts);
       incrementCombo();
+      incrementCorrectCount();
       recordCorrect(brick.equation.topic); // async — fire and forget
       addXP(5);
       showFeedback('✓ Correct!', Colors.success);
@@ -240,7 +245,7 @@ export default function GameScreen() {
         playSound('wrong');
       }
     }
-  }, [isHotStreak, difficulty, levelUpActive]);
+  }, [isHotStreak, difficulty, levelUpActive, phase]);
 
   // ─── Feedback Banner ────────────────────────────────────────────────────────
   const showFeedback = (msg: string, _color: string) => {
@@ -318,13 +323,15 @@ export default function GameScreen() {
     setPhase('gameover');
     playSound('gameover');
 
-    // Compute session accuracy from in-memory wrong-answer log
+    // Compute session accuracy from correct/wrong counts
+    const gameState = useGameStore.getState();
+    const sessionCorrect = gameState.correctCount;
     const state = useProgressStore.getState();
     const sessionWrong = state.wrongAnswerLog.filter(
       w => Date.now() - w.timestamp < 3_600_000,
     ).length;
-    const sessionTotal = Math.max(sessionWrong, 1);
-    const accuracy = Math.max(0, 1 - sessionWrong / sessionTotal);
+    const sessionTotal = sessionCorrect + sessionWrong;
+    const accuracy = sessionTotal > 0 ? sessionCorrect / sessionTotal : 1;
 
     // Persist session and XP — async, no need to await before navigating
     recordSession(score, accuracy);
@@ -349,7 +356,7 @@ export default function GameScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Header */}
+      {/* Minimal Header */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => {
@@ -361,8 +368,6 @@ export default function GameScreen() {
         >
           <Text style={styles.backBtnText}>✕</Text>
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { fontFamily: headingFont }]}>MATHRIS</Text>
-        <View style={styles.headerRight} />
       </View>
 
       <HUD
@@ -380,6 +385,14 @@ export default function GameScreen() {
         <GameBoard grid={grid} currentBrick={currentBrick} wrongFlash={wrongAnswerFlash} />
       </View>
 
+      {/* Equation Chalk Strip */}
+      <View style={styles.chalkStrip}>
+        <Text style={[styles.chalkLabel, { fontFamily: bodyFont }]}>EQUATION</Text>
+        <Text style={[styles.chalkEquation, { fontFamily: monoBoldFont }]}>
+          {currentBrick ? currentBrick.equation.display.replace(/\n/g, '   |   ') : '—'}
+        </Text>
+      </View>
+
       {/* Feedback banner */}
       {feedbackMsg && (
         <Animated.View style={[styles.feedbackBanner, { opacity: feedbackAnim }]}>
@@ -387,38 +400,37 @@ export default function GameScreen() {
         </Animated.View>
       )}
 
-      {/* Brick controls */}
-      <View style={styles.controls}>
-        <TouchableOpacity style={styles.controlBtn} onPress={moveLeft}>
-          <Text style={[styles.controlText, { fontFamily: monoBoldFont }]}>◀</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.controlBtn} onPress={rotateBrick}>
-          <Text style={[styles.controlText, { fontFamily: monoBoldFont }]}>↻</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.controlBtn} onPress={hardDrop}>
-          <Text style={[styles.controlText, { fontFamily: monoBoldFont }]}>▼▼</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.controlBtn} onPress={moveRight}>
-          <Text style={[styles.controlText, { fontFamily: monoBoldFont }]}>▶</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Brick controls and Power-ups aligned */}
+      <View style={styles.controlsRow}>
+        <View style={styles.controlsGroup}>
+          <TouchableOpacity style={styles.controlBtn} onPress={moveLeft}>
+            <Text style={[styles.controlText, { fontFamily: monoBoldFont }]}>◀</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.controlBtn} onPress={rotateBrick}>
+            <Text style={[styles.controlText, { fontFamily: monoBoldFont }]}>↻</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.controlBtn} onPress={hardDrop}>
+            <Text style={[styles.controlText, { fontFamily: monoBoldFont }]}>▼▼</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.controlBtn} onPress={moveRight}>
+            <Text style={[styles.controlText, { fontFamily: monoBoldFont }]}>▶</Text>
+          </TouchableOpacity>
+        </View>
 
-      {/* Power-up bar */}
-      <View style={styles.powerRow}>
-        <TouchableOpacity
-          style={[styles.powerBtn, freezeTokens === 0 && styles.powerBtnDim]}
-          onPress={handleFreeze}
-        >
-          <Text style={styles.powerIcon}>🧊</Text>
-          <Text style={[styles.powerLabel, { fontFamily: bodyFont }]}>Freeze ({freezeTokens})</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.powerBtn, hintTokens === 0 && styles.powerBtnDim]}
-          onPress={handleHint}
-        >
-          <Text style={styles.powerIcon}>💡</Text>
-          <Text style={[styles.powerLabel, { fontFamily: bodyFont }]}>Hint ({hintTokens})</Text>
-        </TouchableOpacity>
+        <View style={styles.powerGroup}>
+          <TouchableOpacity
+            style={[styles.powerBtn, freezeTokens === 0 && styles.powerBtnDim]}
+            onPress={handleFreeze}
+          >
+            <Text style={[styles.powerLabel, { fontFamily: bodyFont }]}>Freeze ({freezeTokens})</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.powerBtn, hintTokens === 0 && styles.powerBtnDim]}
+            onPress={handleHint}
+          >
+            <Text style={[styles.powerLabel, { fontFamily: bodyFont }]}>Hint ({hintTokens})</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Answer keypad */}
@@ -446,31 +458,48 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.xs,
   },
   backBtn: {
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.bgBorder,
   },
   backBtnText: {
     color: Colors.muted,
     fontSize: FontSize.md,
   },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    color: Colors.white,
-    fontSize: FontSize.lg,
-    letterSpacing: 4,
-  },
-  headerRight: { width: 36 },
   boardWrapper: {
     alignItems: 'center',
     marginVertical: Spacing.xs,
+  },
+  chalkStrip: {
+    backgroundColor: Colors.primary,
+    marginHorizontal: Spacing.xl,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: Spacing.xs,
+    borderWidth: 1,
+    borderColor: Colors.primaryLight,
+  },
+  chalkLabel: {
+    color: 'rgba(232, 228, 220, 0.75)', // chalky off-white with transparency
+    fontSize: FontSize.xs,
+    letterSpacing: 1.5,
+    marginBottom: 2,
+  },
+  chalkEquation: {
+    color: Colors.white,
+    fontSize: FontSize.lg,
+    letterSpacing: 0.5,
   },
   feedbackBanner: {
     position: 'absolute',
@@ -487,48 +516,48 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: FontSize.md,
   },
-  controls: {
+  controlsRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    gap: Spacing.md,
+    gap: Spacing.sm,
     paddingHorizontal: Spacing.xl,
     marginVertical: Spacing.xs,
+  },
+  controlsGroup: {
+    flex: 3,
+    flexDirection: 'row',
+    gap: Spacing.xs,
   },
   controlBtn: {
     flex: 1,
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.md,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.md,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: Colors.bgBorder,
   },
   controlText: {
     color: Colors.offWhite,
-    fontSize: FontSize.lg,
+    fontSize: FontSize.md,
   },
-  powerRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.xl,
-    marginBottom: Spacing.sm,
+  powerGroup: {
+    flex: 2,
+    flexDirection: 'column',
+    gap: Spacing.xs,
   },
   powerBtn: {
     flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.xs,
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.md,
-    paddingVertical: Spacing.sm,
+    paddingVertical: 2,
     borderWidth: 1,
     borderColor: Colors.bgBorder,
   },
   powerBtnDim: { opacity: 0.35 },
-  powerIcon: { fontSize: 16 },
   powerLabel: {
     color: Colors.offWhite,
-    fontSize: FontSize.sm,
+    fontSize: FontSize.xs - 1,
   },
 });

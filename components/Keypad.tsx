@@ -33,7 +33,7 @@ export default function Keypad({ difficulty, onSubmit, disabled }: Props) {
   const isHard = difficulty === 'hard';
   const monoFont = useFontFamily('mono');
   const monoBoldFont = useFontFamily('monoBold');
-  const headingFont = useFontFamily('heading');
+  const headingMedium = useFontFamily('headingMedium');
 
   const currentVal = isHard ? (activeField === 'x' ? xVal : yVal) : xVal;
   const setCurrentVal = (v: string) => {
@@ -62,6 +62,8 @@ export default function Keypad({ difficulty, onSubmit, disabled }: Props) {
     let answer: string;
     if (isHard) {
       answer = `X=${xVal},Y=${yVal}`;
+    } else if (difficulty === 'medium') {
+      answer = `X=${xVal}`;
     } else {
       answer = xVal;
     }
@@ -102,6 +104,9 @@ export default function Keypad({ difficulty, onSubmit, disabled }: Props) {
       ) : (
         <View style={styles.displayRow}>
           <View style={[styles.displayField, styles.displayFieldActive, { flex: 1 }]}>
+            {difficulty === 'medium' && (
+              <Text style={[styles.displayLabel, { fontFamily: monoFont }]}>X =</Text>
+            )}
             <Text style={[styles.displayValue, { fontFamily: monoBoldFont }]}>{xVal || '?'}</Text>
           </View>
         </View>
@@ -129,7 +134,7 @@ export default function Keypad({ difficulty, onSubmit, disabled }: Props) {
         onPress={handleSubmit}
         activeOpacity={0.8}
       >
-        <Text style={[styles.submitText, { fontFamily: headingFont }]}>✓  Submit</Text>
+        <Text style={[styles.submitText, { fontFamily: headingMedium }]}>Submit</Text>
       </TouchableOpacity>
     </View>
   );
@@ -142,6 +147,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.xl,
     padding: Spacing.md,
     gap: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Colors.bgBorder,
   },
   displayRow: {
     flexDirection: 'row',
@@ -150,7 +157,7 @@ const styles = StyleSheet.create({
   },
   displayField: {
     flex: 1,
-    backgroundColor: Colors.bgSurface,
+    backgroundColor: Colors.board,
     borderRadius: Radius.md,
     borderWidth: 1.5,
     borderColor: Colors.bgBorder,
@@ -175,7 +182,7 @@ const styles = StyleSheet.create({
   },
   key: {
     flex: 1,
-    backgroundColor: Colors.bgSurface,
+    backgroundColor: Colors.board,
     borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: Colors.bgBorder,
@@ -200,6 +207,6 @@ const styles = StyleSheet.create({
   submitText: {
     color: Colors.white,
     fontSize: FontSize.lg,
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
 });

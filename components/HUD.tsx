@@ -25,9 +25,9 @@ export default function HUD({
 }: Props) {
   const streakAnim = useRef(new Animated.Value(0)).current;
 
-  // Typography for dyslexia accessibility
-  const headingFont = useFontFamily('heading');
-  const bodyFont = useFontFamily('body');
+  const headingMedium = useFontFamily('headingMedium');
+  const mono = useFontFamily('mono');
+  const monoBold = useFontFamily('monoBold');
 
   useEffect(() => {
     if (isHotStreak) {
@@ -37,123 +37,111 @@ export default function HUD({
     }
   }, [isHotStreak]);
 
-  const streakScale = streakAnim.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] });
+  const streakScale = streakAnim.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1] });
 
   return (
     <View style={styles.container}>
-      {/* Top row — score & level */}
-      <View style={styles.topRow}>
-        <View style={styles.statBox}>
-          <Text style={[styles.statLabel, { fontFamily: bodyFont }]}>SCORE</Text>
-          <Text style={[styles.statValue, { fontFamily: headingFont }]}>{score.toLocaleString()}</Text>
+      {/* Compact stat strip */}
+      <View style={styles.strip}>
+        <View style={styles.stat}>
+          <Text style={[styles.label, { fontFamily: headingMedium }]}>Score</Text>
+          <Text style={[styles.value, { fontFamily: monoBold }]}>{score.toLocaleString()}</Text>
         </View>
-        <View style={styles.statBox}>
-          <Text style={[styles.statLabel, { fontFamily: bodyFont }]}>LEVEL</Text>
-          <Text style={[styles.statValue, { fontFamily: headingFont }]}>{level}</Text>
+
+        <View style={styles.divider} />
+
+        <View style={styles.stat}>
+          <Text style={[styles.label, { fontFamily: headingMedium }]}>Stage</Text>
+          <Text style={[styles.value, { fontFamily: monoBold }]}>{level}</Text>
         </View>
-        <View style={styles.statBox}>
-          <Text style={[styles.statLabel, { fontFamily: bodyFont }]}>COMBO</Text>
-          <Text style={[styles.statValue, combo > 0 && styles.comboActive, { fontFamily: headingFont }]}>
+
+        <View style={styles.divider} />
+
+        <View style={styles.stat}>
+          <Text style={[styles.label, { fontFamily: headingMedium }]}>Combo</Text>
+          <Text style={[styles.value, combo > 0 && styles.comboActive, { fontFamily: monoBold }]}>
             {combo > 0 ? `×${combo}` : '—'}
+          </Text>
+        </View>
+
+        <View style={styles.divider} />
+
+        <View style={styles.tokenStat}>
+          <Text style={[styles.tokenText, { fontFamily: mono }]}>
+            {freezeTokens > 0 ? `❄ ${freezeTokens}` : '❄ 0'}
+          </Text>
+          <Text style={[styles.tokenText, { fontFamily: mono }]}>
+            {hintTokens > 0 ? `? ${hintTokens}` : '? 0'}
           </Text>
         </View>
       </View>
 
-      {/* Hot Streak banner */}
+      {/* Hot Streak banner — only when active */}
       {isHotStreak && (
         <Animated.View style={[styles.streakBanner, { transform: [{ scale: streakScale }] }]}>
-          <Text style={[styles.streakText, { fontFamily: headingFont }]}>🔥 HOT STREAK! ×2 SCORE</Text>
+          <Text style={[styles.streakText, { fontFamily: headingMedium }]}>Streak active · ×2 score</Text>
         </Animated.View>
       )}
-
-      {/* Tokens */}
-      <View style={styles.tokensRow}>
-        <View style={styles.tokenGroup}>
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Text key={i} style={[styles.tokenIcon, i < freezeTokens ? styles.tokenActive : styles.tokenUsed]}>
-              🧊
-            </Text>
-          ))}
-          <Text style={[styles.tokenLabel, { fontFamily: bodyFont }]}>Freeze</Text>
-        </View>
-        <View style={styles.tokenGroup}>
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Text key={i} style={[styles.tokenIcon, i < hintTokens ? styles.tokenActive : styles.tokenUsed]}>
-              💡
-            </Text>
-          ))}
-          <Text style={[styles.tokenLabel, { fontFamily: bodyFont }]}>Hints</Text>
-        </View>
-      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    gap: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.xs,
+    gap: Spacing.xs,
   },
-  topRow: {
+  strip: {
     flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  statBox: {
-    flex: 1,
+    alignItems: 'center',
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.md,
-    padding: Spacing.sm,
-    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
     borderWidth: 1,
     borderColor: Colors.bgBorder,
   },
-  statLabel: {
+  stat: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  label: {
     color: Colors.muted,
     fontSize: FontSize.xs,
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
-  statValue: {
+  value: {
     color: Colors.white,
     fontSize: FontSize.lg,
-    marginTop: 2,
+    marginTop: 1,
   },
   comboActive: {
     color: Colors.streak,
   },
+  divider: {
+    width: 1,
+    height: 24,
+    backgroundColor: Colors.bgBorder,
+  },
+  tokenStat: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 1,
+  },
+  tokenText: {
+    color: Colors.muted,
+    fontSize: FontSize.xs,
+  },
   streakBanner: {
     backgroundColor: Colors.streak,
-    borderRadius: Radius.md,
-    paddingVertical: Spacing.sm,
+    borderRadius: Radius.sm,
+    paddingVertical: Spacing.xs + 2,
     alignItems: 'center',
   },
   streakText: {
-    color: Colors.white,
-    fontSize: FontSize.md,
-    letterSpacing: 0.5,
-  },
-  tokensRow: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    justifyContent: 'center',
-  },
-  tokenGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  tokenIcon: {
-    fontSize: 18,
-  },
-  tokenActive: {
-    opacity: 1,
-  },
-  tokenUsed: {
-    opacity: 0.25,
-  },
-  tokenLabel: {
-    color: Colors.muted,
-    fontSize: FontSize.xs,
-    marginLeft: Spacing.xs,
+    color: Colors.bg,
+    fontSize: FontSize.sm,
+    letterSpacing: 0.3,
   },
 });

@@ -20,8 +20,7 @@ interface Props {
 export default function HintModal({ visible, hints, scoreDeduction, onClose }: Props) {
   const [step, setStep] = useState(0);
 
-  // Typography for dyslexia accessibility
-  const headingFont = useFontFamily('heading');
+  const headingMedium = useFontFamily('headingMedium');
   const bodyFont = useFontFamily('body');
   const monoFont = useFontFamily('mono');
   const monoBoldFont = useFontFamily('monoBold');
@@ -45,7 +44,7 @@ export default function HintModal({ visible, hints, scoreDeduction, onClose }: P
       <View style={styles.overlay}>
         <View style={styles.sheet}>
           <View style={styles.header}>
-            <Text style={[styles.title, { fontFamily: headingFont }]}>💡 Step-by-Step Hint</Text>
+            <Text style={[styles.title, { fontFamily: headingMedium }]}>Step-by-step hint</Text>
             <Text style={[styles.cost, { fontFamily: monoBoldFont }]}>−{scoreDeduction} pts</Text>
           </View>
 
@@ -65,11 +64,11 @@ export default function HintModal({ visible, hints, scoreDeduction, onClose }: P
           <View style={styles.footer}>
             {step < hints.length - 1 ? (
               <TouchableOpacity style={styles.nextBtn} onPress={handleNext}>
-                <Text style={[styles.nextBtnText, { fontFamily: headingFont }]}>Next Step →</Text>
+                <Text style={[styles.nextBtnText, { fontFamily: headingMedium }]}>Next step</Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity style={styles.doneBtn} onPress={handleClose}>
-                <Text style={[styles.doneBtnText, { fontFamily: headingFont }]}>Got it! ✓</Text>
+                <Text style={[styles.doneBtnText, { fontFamily: headingMedium }]}>Got it</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -92,6 +91,8 @@ const styles = StyleSheet.create({
     padding: Spacing.xl,
     paddingBottom: Spacing.xxxl,
     maxHeight: '70%',
+    borderTopWidth: 1,
+    borderColor: Colors.bgBorder,
   },
   header: {
     flexDirection: 'row',
@@ -115,7 +116,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: Spacing.md,
     marginBottom: Spacing.md,
-    opacity: 0.5,
+    opacity: 0.4,
   },
   stepRowActive: {
     opacity: 1,

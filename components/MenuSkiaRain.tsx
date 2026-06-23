@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Canvas, Group, Rect } from '@shopify/react-native-skia';
 import Animated, {
@@ -12,8 +12,8 @@ import { Colors } from '../constants/theme';
 interface BrickData {
   id: number;
   x: number;
-  speed: number;        // pixels per millisecond
-  rotationSpeed: number; // degrees per millisecond
+  speed: number;
+  rotationSpeed: number;
   initialY: number;
   initialRotation: number;
   color: string;
@@ -31,10 +31,8 @@ const BRICK_COLORS = [
   Colors.brickL,
 ];
 
-// Helper to generate random number
 const rand = (min: number, max: number) => Math.random() * (max - min) + min;
 
-// Sub-component for a single falling brick to respect Rules of Hooks
 function FallingBrick({
   brick,
   time,
@@ -48,18 +46,16 @@ function FallingBrick({
     const elapsed = time.value;
     const distance = elapsed * brick.speed;
     const currentY = brick.initialY + distance;
-    const loopHeight = screenHeight + 200; // include top and bottom pad
-    // Loop Y coordinate
+    const loopHeight = screenHeight + 200;
     return ((currentY + 100) % loopHeight) - 100;
   });
 
   const rotation = useDerivedValue(() => {
     const elapsed = time.value;
     const currentRot = brick.initialRotation + elapsed * brick.rotationSpeed;
-    return (currentRot * Math.PI) / 180; // convert to radians for Skia rotate transform
+    return (currentRot * Math.PI) / 180;
   });
 
-  // Combine transformations using derived value
   const transform = useDerivedValue(() => {
     return [
       { translateX: brick.x },
@@ -73,21 +69,11 @@ function FallingBrick({
       transform={transform}
       origin={{ x: brick.width / 2, y: brick.height / 2 }}
     >
-      {/* Brick body */}
       <Rect
         x={0}
         y={0}
         width={brick.width}
         height={brick.height}
-        color={brick.color}
-        opacity={0.12} // subtle background opacity
-      />
-      {/* Dynamic outline to give blocky neon feel */}
-      <Rect
-        x={2}
-        y={2}
-        width={brick.width - 4}
-        height={brick.height - 4}
         color={brick.color}
         opacity={0.06}
       />
@@ -98,27 +84,24 @@ function FallingBrick({
 export default function MenuSkiaRain() {
   const { width, height } = useWindowDimensions();
 
-  // Create a single time accumulator shared value
   const time = useSharedValue(0);
 
-  // Tick the time value forward inside a frame callback
   useFrameCallback(frameInfo => {
     time.value = frameInfo.timeSinceFirstFrame;
   });
 
-  // Generate falling bricks config (memoized so they don't rebuild every render)
   const bricks = useMemo(() => {
-    const count = 18;
+    const count = 14;
     const list: BrickData[] = [];
     for (let i = 0; i < count; i++) {
-      const bWidth = [24, 36, 48][i % 3]; // standard, wide, double-wide representation
-      const bHeight = 20;
+      const bWidth = [20, 30, 44][i % 3];
+      const bHeight = 16;
       list.push({
         id: i,
         x: rand(0, width - bWidth),
-        speed: rand(0.06, 0.14), // speed range: px/ms
-        rotationSpeed: rand(0.02, 0.08), // rotation speed: deg/ms
-        initialY: rand(-height, 0), // scattered above screen
+        speed: rand(0.04, 0.10),
+        rotationSpeed: rand(0.01, 0.05),
+        initialY: rand(-height, 0),
         initialRotation: rand(0, 360),
         color: BRICK_COLORS[i % BRICK_COLORS.length],
         width: bWidth,

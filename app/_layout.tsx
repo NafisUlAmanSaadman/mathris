@@ -13,8 +13,8 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     'Outfit-Regular': require('../assets/fonts/Outfit-Regular.ttf'),
-    'Outfit-Medium': require('../assets/fonts/Outfit-Regular.ttf'),
-    'Outfit-Bold': require('../assets/fonts/Outfit-Regular.ttf'),
+    'Outfit-Medium': require('../assets/fonts/Outfit-Medium.ttf'),
+    'Outfit-Bold': require('../assets/fonts/Outfit-Bold.ttf'),
     'JetBrainsMono-Regular': require('../assets/fonts/JetBrainsMono-Regular.ttf'),
     'JetBrainsMono-Bold': require('../assets/fonts/JetBrainsMono-Bold.ttf'),
     'OpenDyslexic-Regular': require('../assets/fonts/OpenDyslexic-Regular.otf'),

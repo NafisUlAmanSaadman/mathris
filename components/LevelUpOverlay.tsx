@@ -19,19 +19,25 @@ interface Props {
   onClose: () => void;
 }
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// Generate some random confetti particles
-const PARTICLE_COUNT = 24;
+const PARTICLE_COUNT = 20;
+const PARTICLE_COLORS = [
+  Colors.primary,
+  Colors.success,
+  Colors.streak,
+  Colors.brickT,
+  Colors.brickJ,
+  Colors.brickS,
+];
 const PARTICLES = Array.from({ length: PARTICLE_COUNT }, (_, i) => {
   const angle = (i / PARTICLE_COUNT) * 2 * Math.PI;
   return {
     id: i,
-    color: ['#FF6B6B', '#4ECDC4', '#FFE66D', '#6C63FF', '#C77DFF', '#4ADE80'][i % 6],
-    size: Math.random() * 8 + 6,
-    // Random direction vectors
-    dx: Math.cos(angle) * (Math.random() * 120 + 80),
-    dy: Math.sin(angle) * (Math.random() * 120 + 80) - 30, // drift up slightly
+    color: PARTICLE_COLORS[i % PARTICLE_COLORS.length],
+    size: Math.random() * 7 + 5,
+    dx: Math.cos(angle) * (Math.random() * 100 + 60),
+    dy: Math.sin(angle) * (Math.random() * 100 + 60) - 20,
   };
 });
 
@@ -40,42 +46,31 @@ export default function LevelUpOverlay({ newLevel, onClose }: Props) {
   const bodyFont = useFontFamily('body');
   const monoBoldFont = useFontFamily('monoBold');
 
-  // Animation values
   const scale = useSharedValue(0);
   const opacity = useSharedValue(0);
-  const rotation = useSharedValue(0);
   const pulse = useSharedValue(1);
   const particlesProgress = useSharedValue(0);
 
   useEffect(() => {
-    // Play level up sound/haptics
     triggerSuccessHaptic();
 
-    // Trigger animations
     opacity.value = withTiming(1, { duration: 300 });
-    scale.value = withSpring(1, { damping: 10, stiffness: 80 });
-
-    rotation.value = withRepeat(
-      withTiming(360, { duration: 8000, easing: Easing.linear }),
-      -1,
-      false
-    );
+    scale.value = withSpring(1, { damping: 12, stiffness: 90 });
 
     pulse.value = withRepeat(
       withSequence(
-        withTiming(1.08, { duration: 600, easing: Easing.ease }),
-        withTiming(1.0, { duration: 600, easing: Easing.ease })
+        withTiming(1.05, { duration: 700, easing: Easing.ease }),
+        withTiming(1.0, { duration: 700, easing: Easing.ease })
       ),
       -1,
       true
     );
 
-    particlesProgress.value = withSpring(1, { damping: 12, stiffness: 45 });
+    particlesProgress.value = withSpring(1, { damping: 14, stiffness: 50 });
 
     return () => {
       cancelAnimation(opacity);
       cancelAnimation(scale);
-      cancelAnimation(rotation);
       cancelAnimation(pulse);
       cancelAnimation(particlesProgress);
     };
@@ -89,26 +84,19 @@ export default function LevelUpOverlay({ newLevel, onClose }: Props) {
     transform: [{ scale: scale.value }],
   }));
 
-  const glowStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation.value}deg` }],
-  }));
-
   const btnStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulse.value }],
   }));
 
   return (
     <Animated.View style={[styles.container, bgStyle]}>
-      {/* Background Glow */}
-      <Animated.View style={[styles.glowRing, glowStyle, Shadow.glow(Colors.primary)]} />
-
-      {/* Confetti Particles */}
+      {/* Confetti */}
       {PARTICLES.map(p => {
         const particleStyle = useAnimatedStyle(() => {
           const x = p.dx * particlesProgress.value;
           const y = p.dy * particlesProgress.value;
           const op = 1 - particlesProgress.value;
-          const rot = particlesProgress.value * 720;
+          const rot = particlesProgress.value * 540;
           return {
             transform: [
               { translateX: x },
@@ -129,29 +117,28 @@ export default function LevelUpOverlay({ newLevel, onClose }: Props) {
                 backgroundColor: p.color,
                 width: p.size,
                 height: p.size,
-                borderRadius: p.size / 2,
+                borderRadius: 2,
               },
             ]}
           />
         );
       })}
 
-      {/* Main Alert Card */}
+      {/* Card */}
       <Animated.View style={[styles.card, cardStyle]}>
-        <Text style={[styles.emoji, { textShadowColor: Colors.primary, textShadowRadius: 20 }]}>🏆</Text>
-        <Text style={[styles.title, { fontFamily: headingFont }]}>LEVEL UP!</Text>
-        <Text style={[styles.subtitle, { fontFamily: bodyFont }]}>Your math skills are ascending</Text>
+        <Text style={[styles.title, { fontFamily: headingFont }]}>STAGE UP</Text>
+        <Text style={[styles.subtitle, { fontFamily: bodyFont }]}>Keep going</Text>
 
         <View style={styles.badgeContainer}>
           <View style={styles.levelBadge}>
-            <Text style={[styles.levelLabel, { fontFamily: bodyFont }]}>NEW LEVEL</Text>
+            <Text style={[styles.levelLabel, { fontFamily: bodyFont }]}>STAGE</Text>
             <Text style={[styles.levelValue, { fontFamily: monoBoldFont }]}>{newLevel}</Text>
           </View>
         </View>
 
         <Animated.View style={btnStyle}>
           <TouchableOpacity style={styles.button} onPress={onClose} activeOpacity={0.8}>
-            <Text style={[styles.buttonText, { fontFamily: headingFont }]}>CONTINUE</Text>
+            <Text style={[styles.buttonText, { fontFamily: headingFont }]}>Continue</Text>
           </TouchableOpacity>
         </Animated.View>
       </Animated.View>
@@ -166,39 +153,24 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     bottom: 0,
-    backgroundColor: 'rgba(5, 5, 15, 0.9)',
+    backgroundColor: 'rgba(10, 12, 20, 0.92)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 9999,
   },
-  glowRing: {
-    position: 'absolute',
-    width: SCREEN_WIDTH * 0.8,
-    height: SCREEN_WIDTH * 0.8,
-    borderRadius: (SCREEN_WIDTH * 0.8) / 2,
-    borderWidth: 4,
-    borderColor: 'rgba(108, 99, 255, 0.15)',
-    borderStyle: 'dashed',
-  },
   card: {
-    width: SCREEN_WIDTH * 0.85,
+    width: SCREEN_WIDTH * 0.82,
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.xl,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: Colors.bgBorder,
     padding: Spacing.xxl,
     alignItems: 'center',
-    ...Shadow.glow(Colors.primaryDark),
-  },
-  emoji: {
-    fontSize: 72,
-    marginBottom: Spacing.sm,
-    textShadowOffset: { width: 0, height: 0 },
   },
   title: {
     color: Colors.white,
     fontSize: FontSize.display,
-    letterSpacing: 2,
+    letterSpacing: 3,
     textAlign: 'center',
   },
   subtitle: {
@@ -214,19 +186,19 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xxl,
   },
   levelBadge: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: Colors.bgSurface,
-    borderWidth: 3,
+    borderWidth: 2,
     borderColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    ...Shadow.glow(Colors.primaryLight),
+    ...Shadow.glow(Colors.primary),
   },
   levelLabel: {
     color: Colors.muted,
-    fontSize: 10,
+    fontSize: 9,
     letterSpacing: 1,
   },
   levelValue: {
@@ -239,12 +211,11 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     paddingHorizontal: Spacing.xxl,
     paddingVertical: Spacing.md,
-    ...Shadow.glow(Colors.primary),
   },
   buttonText: {
     color: Colors.white,
     fontSize: FontSize.lg,
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   particle: {
     position: 'absolute',

@@ -192,8 +192,12 @@ function makeIntegerSystem(): Equation {
   // System: aX + bY = c  and  dX + eY = f
   // Pick solution first, then build equations
   const X = rand(1, 6), Y = rand(1, 6);
-  const a = rand(1, 5), b = rand(1, 5);
-  const d = rand(1, 5), e = rand(1, 5);
+  let a: number, b: number, d: number, e: number;
+  // Ensure determinant (a*e - b*d) != 0 so the system has a unique solution
+  do {
+    a = rand(1, 5); b = rand(1, 5);
+    d = rand(1, 5); e = rand(1, 5);
+  } while (a * e - b * d === 0);
   const c = a * X + b * Y;
   const f = d * X + e * Y;
   return {

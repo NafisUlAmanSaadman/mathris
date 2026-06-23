@@ -1,46 +1,49 @@
-// Mathris Design System — Theme Tokens
+// Mathris Design System — "Chalkboard Arcade" Theme Tokens
 
 export const Colors = {
-  // Background layers
-  bg: '#0D0D1A',
-  bgCard: '#13132B',
-  bgSurface: '#1A1A35',
-  bgBorder: '#2A2A50',
+  // Background layers — deep slate-blue, cooler than generic near-black
+  bg: '#171B26',
+  bgCard: '#1E2433',
+  bgSurface: '#252B3A',
+  bgBorder: '#2A3040',
 
-  // Primary purple
-  primary: '#6C63FF',
-  primaryLight: '#8B85FF',
-  primaryDark: '#4A42CC',
+  // Primary accent — warm coral, NOT purple
+  primary: '#E8735A',
+  primaryLight: '#EF8E7A',
+  primaryDark: '#C45A42',
 
-  // Difficulty neons
-  easy: '#4ECDC4',
-  easyDim: '#2A7A75',
-  medium: '#FFE66D',
-  mediumDim: '#9A8B30',
-  hard: '#FF6B6B',
-  hardDim: '#9A3030',
+  // Difficulty colors — desaturated, intentional
+  easy: '#6BBF8A',
+  easyDim: '#3A6B4D',
+  medium: '#E8A94B',
+  mediumDim: '#8A6A2E',
+  hard: '#E8735A',
+  hardDim: '#8A4536',
 
   // Semantic
-  success: '#4ECDC4',
-  danger: '#FF6B6B',
-  warning: '#FFE66D',
-  white: '#FFFFFF',
-  offWhite: '#E8E8FF',
-  muted: '#6B6B99',
-  dimmed: '#3A3A60',
+  success: '#6BBF8A',
+  danger: '#D95B5B',
+  warning: '#E8A94B',
+  white: '#E8E4DC',     // chalk-white, warm
+  offWhite: '#CFC9BE',
+  muted: '#8B8798',     // chalky gray-purple
+  dimmed: '#4A4862',
 
-  // Brick colours (per tetromino)
-  brickI: '#4ECDC4',
-  brickO: '#FFE66D',
-  brickT: '#C77DFF',
-  brickS: '#4ADE80',
-  brickZ: '#FF6B6B',
-  brickJ: '#60A5FA',
-  brickL: '#FB923C',
+  // Brick colours — slightly muted, arcade-feel
+  brickI: '#5CB8B2',
+  brickO: '#E8A94B',
+  brickT: '#B07CD8',
+  brickS: '#6BBF8A',
+  brickZ: '#D95B5B',
+  brickJ: '#5B8FD9',
+  brickL: '#E8935A',
 
-  // Streak / combo
-  streak: '#FF9F43',
-  streakGlow: '#FF6B35',
+  // Streak / combo — amber
+  streak: '#E8A94B',
+  streakGlow: '#D4882A',
+
+  // Board
+  board: '#151C28',
 };
 
 export const FontFamily = {
@@ -52,14 +55,14 @@ export const FontFamily = {
 };
 
 export const FontSize = {
-  xs: 11,
-  sm: 13,
-  md: 15,
-  lg: 18,
-  xl: 22,
-  xxl: 28,
-  display: 36,
-  hero: 48,
+  xs: 10,
+  sm: 12,
+  md: 14,
+  lg: 17,
+  xl: 21,
+  xxl: 26,
+  display: 32,
+  hero: 42,
 };
 
 export const Spacing = {
@@ -75,8 +78,8 @@ export const Spacing = {
 export const Radius = {
   sm: 6,
   md: 10,
-  lg: 16,
-  xl: 24,
+  lg: 14,
+  xl: 20,
   full: 999,
 };
 
@@ -84,8 +87,8 @@ export const Shadow = {
   glow: (color: string) => ({
     shadowColor: color,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 6,
   }),
 };

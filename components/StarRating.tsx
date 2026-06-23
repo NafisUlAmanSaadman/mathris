@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Colors, FontFamily, FontSize, Spacing } from '../constants/theme';
+import { Colors, FontSize, Spacing } from '../constants/theme';
 
 interface Props {
   count: number; // 1, 2, or 3
@@ -25,12 +25,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   star: {
-    fontSize: 40,
+    fontSize: 36,
   },
   starOn: {
-    color: Colors.medium,
+    color: Colors.streak,
   },
   starOff: {
-    color: Colors.dimmed,
+    color: Colors.bgBorder,
   },
 });

@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { Grid, Cell } from '../engine/engine';
 import { createEmptyGrid } from '../engine/engine';
 import type { FallingBrick } from '../engine/bricks';
-import type { Equation } from '../engine/equations';
+import type { Equation, EquationTopic } from '../engine/equations';
 import type { Difficulty } from '../constants/config';
 import {
   FREEZE_TOKENS_PER_GAME,
@@ -23,11 +23,13 @@ export interface GameState {
   linesCleared: number;
   combo: number;          // consecutive correct answers
   isHotStreak: boolean;
+  correctCount: number;    // total correct answers this session
   freezeTokens: number;
   hintTokens: number;
   wrongAnswerFlash: boolean;   // trigger red flash on brick
   lastClearedRows: number[];
   lastEquation: Equation | null;
+  practiceTopic: EquationTopic | null;
 
   // Actions
   setPhase: (p: GamePhase) => void;
@@ -39,11 +41,13 @@ export interface GameState {
   incrementLines: (n: number) => void;
   incrementCombo: () => void;
   resetCombo: () => void;
+  incrementCorrectCount: () => void;
   useFreeze: () => void;
   useHint: () => void;
   setWrongAnswerFlash: (v: boolean) => void;
   setClearedRows: (rows: number[]) => void;
   setLastEquation: (eq: Equation | null) => void;
+  setPracticeTopic: (t: EquationTopic | null) => void;
   resetGame: () => void;
 }
 
@@ -58,11 +62,13 @@ export const useGameStore = create<GameState>((set) => ({
   linesCleared: 0,
   combo: 0,
   isHotStreak: false,
+  correctCount: 0,
   freezeTokens: FREEZE_TOKENS_PER_GAME,
   hintTokens: HINT_TOKENS_PER_GAME,
   wrongAnswerFlash: false,
   lastClearedRows: [],
   lastEquation: null,
+  practiceTopic: null,
 
   setPhase: (phase) => set({ phase }),
   setDifficulty: (difficulty) => set({ difficulty }),
@@ -80,11 +86,13 @@ export const useGameStore = create<GameState>((set) => ({
     return { combo, isHotStreak: combo >= 3 };
   }),
   resetCombo: () => set({ combo: 0, isHotStreak: false }),
+  incrementCorrectCount: () => set(s => ({ correctCount: s.correctCount + 1 })),
   useFreeze: () => set(s => ({ freezeTokens: Math.max(0, s.freezeTokens - 1) })),
   useHint: () => set(s => ({ hintTokens: Math.max(0, s.hintTokens - 1) })),
   setWrongAnswerFlash: (wrongAnswerFlash) => set({ wrongAnswerFlash }),
   setClearedRows: (lastClearedRows) => set({ lastClearedRows }),
   setLastEquation: (lastEquation) => set({ lastEquation }),
+  setPracticeTopic: (practiceTopic) => set({ practiceTopic }),
   resetGame: () => set({
     phase: 'idle',
     grid: createEmptyGrid(),
@@ -95,10 +103,12 @@ export const useGameStore = create<GameState>((set) => ({
     linesCleared: 0,
     combo: 0,
     isHotStreak: false,
+    correctCount: 0,
     freezeTokens: FREEZE_TOKENS_PER_GAME,
     hintTokens: HINT_TOKENS_PER_GAME,
     wrongAnswerFlash: false,
     lastClearedRows: [],
     lastEquation: null,
+    practiceTopic: null,
   }),
 }));

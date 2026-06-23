@@ -23,14 +23,14 @@ interface TopicOption {
 }
 
 const TOPICS: TopicOption[] = [
-  { topic: 'addition', label: 'Addition', difficulty: 'easy', icon: '➕' },
-  { topic: 'subtraction', label: 'Subtraction', difficulty: 'easy', icon: '➖' },
-  { topic: 'multiplication', label: 'Multiplication', difficulty: 'easy', icon: '✖️' },
-  { topic: 'division', label: 'Division', difficulty: 'easy', icon: '➗' },
-  { topic: 'algebra-one-step', label: 'One-Step Algebra', difficulty: 'medium', icon: '🔡' },
-  { topic: 'algebra-two-step', label: 'Two-Step Algebra', difficulty: 'medium', icon: '🔢' },
-  { topic: 'algebra-rational', label: 'Rational Equations', difficulty: 'medium', icon: '÷' },
-  { topic: 'systems-integer', label: 'Systems of Equations', difficulty: 'hard', icon: '🧮' },
+  { topic: 'addition', label: 'Addition', difficulty: 'easy', icon: '+' },
+  { topic: 'subtraction', label: 'Subtraction', difficulty: 'easy', icon: '−' },
+  { topic: 'multiplication', label: 'Multiplication', difficulty: 'easy', icon: '×' },
+  { topic: 'division', label: 'Division', difficulty: 'easy', icon: '÷' },
+  { topic: 'algebra-one-step', label: 'One-Step Algebra', difficulty: 'medium', icon: 'x' },
+  { topic: 'algebra-two-step', label: 'Two-Step Algebra', difficulty: 'medium', icon: '2x' },
+  { topic: 'algebra-rational', label: 'Rational Equations', difficulty: 'medium', icon: 'x/y' },
+  { topic: 'systems-integer', label: 'Systems of Equations', difficulty: 'hard', icon: 'x,y' },
 ];
 
 const DIFF_COLORS: Record<Difficulty, string> = {
@@ -41,22 +41,21 @@ const DIFF_COLORS: Record<Difficulty, string> = {
 
 export default function TopicSelectScreen() {
   const router = useRouter();
-  const { setDifficulty, resetGame } = useGameStore();
+  const { setDifficulty, resetGame, setPracticeTopic } = useGameStore();
   const [selected, setSelected] = useState<TopicOption | null>(null);
 
   // Typography for dyslexia accessibility
   const headingFont = useFontFamily('heading');
   const headingMediumFont = useFontFamily('headingMedium');
   const bodyFont = useFontFamily('body');
+  const monoBoldFont = useFontFamily('monoBold');
 
   const handleStart = () => {
     if (!selected) return;
     triggerImpactHaptic();
     resetGame();
     setDifficulty(selected.difficulty);
-    // Note: We can also pass topic target filter to store if wanted,
-    // but the original version just routed. We'll keep it exactly the same
-    // but add our new settings features.
+    setPracticeTopic(selected.topic);
     router.push('/game');
   };
 
@@ -80,32 +79,36 @@ export default function TopicSelectScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         <Text style={[styles.desc, { fontFamily: bodyFont }]}>
           Pick a topic to drill. Only equations from that topic will fall — perfect for targeting weak spots.
         </Text>
 
         <View style={styles.topicsGrid}>
-          {TOPICS.map(opt => (
-            <TouchableOpacity
-              key={opt.topic}
-              style={[
-                styles.topicCard,
-                selected?.topic === opt.topic && {
-                  borderColor: DIFF_COLORS[opt.difficulty],
-                  borderWidth: 2,
-                },
-              ]}
-              onPress={() => handleSelect(opt)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.topicIcon}>{opt.icon}</Text>
-              <Text style={[styles.topicLabel, { fontFamily: headingMediumFont }]}>{opt.label}</Text>
-              <Text style={[styles.topicDiff, { color: DIFF_COLORS[opt.difficulty], fontFamily: bodyFont }]}>
-                {opt.difficulty}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {TOPICS.map(opt => {
+            const isSelected = selected?.topic === opt.topic;
+            return (
+              <TouchableOpacity
+                key={opt.topic}
+                style={[
+                  styles.topicCard,
+                  isSelected && styles.topicCardSelected,
+                ]}
+                onPress={() => handleSelect(opt)}
+                activeOpacity={0.8}
+              >
+                <View style={styles.iconContainer}>
+                  <Text style={[styles.topicIcon, { fontFamily: monoBoldFont, color: isSelected ? Colors.primary : Colors.muted }]}>
+                    {opt.icon}
+                  </Text>
+                </View>
+                <Text style={[styles.topicLabel, { fontFamily: headingMediumFont }]}>{opt.label}</Text>
+                <Text style={[styles.topicDiff, { color: DIFF_COLORS[opt.difficulty], fontFamily: bodyFont }]}>
+                  {opt.difficulty}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         <TouchableOpacity
@@ -114,7 +117,7 @@ export default function TopicSelectScreen() {
           disabled={!selected}
         >
           <Text style={[styles.startBtnText, { fontFamily: headingFont }]}>
-            {selected ? `▶  Practice ${selected.label}` : 'Select a topic above'}
+            {selected ? `Practice ${selected.label}` : 'Select a topic'}
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -137,6 +140,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.bgBorder,
   },
   backBtnText: {
     color: Colors.offWhite,
@@ -162,7 +167,7 @@ const styles = StyleSheet.create({
   topicsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.sm,
+    gap: Spacing.md,
   },
   topicCard: {
     width: '47%',
@@ -174,7 +179,19 @@ const styles = StyleSheet.create({
     borderColor: Colors.bgBorder,
     gap: Spacing.sm,
   },
-  topicIcon: { fontSize: 32 },
+  topicCardSelected: {
+    borderColor: Colors.primary,
+    borderWidth: 2,
+  },
+  iconContainer: {
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  topicIcon: {
+    fontSize: 24,
+    textAlign: 'center',
+  },
   topicLabel: {
     color: Colors.white,
     fontSize: FontSize.sm,
@@ -194,6 +211,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bgCard,
     borderWidth: 1,
     borderColor: Colors.bgBorder,
+    opacity: 0.5,
   },
   startBtnText: {
     color: Colors.white,

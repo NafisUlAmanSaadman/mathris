@@ -69,9 +69,10 @@ export default function ReviewScreen() {
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         {/* Game over header */}
         <View style={styles.header}>
-          <Text style={[styles.title, { fontFamily: bodyFont }]}>Game Over</Text>
+          <Text style={[styles.title, { fontFamily: headingMediumFont }]}>GAME OVER</Text>
           <StarRating count={stars} />
-          <Text style={[styles.score, { fontFamily: headingFont }]}>{score.toLocaleString()} pts</Text>
+          <Text style={[styles.score, { fontFamily: monoBoldFont }]}>{score.toLocaleString()}</Text>
+          <Text style={[styles.scoreLabel, { fontFamily: headingMediumFont }]}>POINTS</Text>
           <Text style={[styles.accuracy, { fontFamily: bodyFont }]}>
             {Math.round(accuracy * 100)}% accuracy
           </Text>
@@ -80,7 +81,7 @@ export default function ReviewScreen() {
         {/* CTA buttons */}
         <View style={styles.buttonRow}>
           <TouchableOpacity style={styles.playAgainBtn} onPress={handlePlayAgain}>
-            <Text style={[styles.playAgainText, { fontFamily: headingFont }]}>▶  Play Again</Text>
+            <Text style={[styles.playAgainText, { fontFamily: headingFont }]}>Play again</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.menuBtn} onPress={handleMenu}>
             <Text style={[styles.menuBtnText, { fontFamily: headingMediumFont }]}>Menu</Text>
@@ -90,7 +91,7 @@ export default function ReviewScreen() {
         {/* Wrong answer review */}
         {sessionWrong.length > 0 ? (
           <View style={styles.reviewSection}>
-            <Text style={[styles.reviewTitle, { fontFamily: headingFont }]}>Let's look at these together 🤝</Text>
+            <Text style={[styles.reviewTitle, { fontFamily: headingFont }]}>Let's review</Text>
             <Text style={[styles.reviewSubtitle, { fontFamily: bodyFont }]}>
               {sessionWrong.length} equation{sessionWrong.length !== 1 ? 's' : ''} to revisit
             </Text>
@@ -131,7 +132,7 @@ export default function ReviewScreen() {
           style={styles.dashboardBtn}
           onPress={handleDashboard}
         >
-          <Text style={[styles.dashboardBtnText, { fontFamily: headingMediumFont }]}>📊 View Full Progress Dashboard</Text>
+          <Text style={[styles.dashboardBtnText, { fontFamily: headingMediumFont }]}>View progress dashboard</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -147,22 +148,28 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: Spacing.xs,
     paddingVertical: Spacing.xl,
   },
   title: {
     color: Colors.muted,
-    fontSize: FontSize.md,
-    letterSpacing: 3,
-    textTransform: 'uppercase',
+    fontSize: FontSize.sm,
+    letterSpacing: 4,
   },
   score: {
-    color: Colors.white,
-    fontSize: FontSize.hero,
-    marginTop: Spacing.sm,
+    color: Colors.primary,
+    fontSize: 48,
+    marginTop: Spacing.md,
+  },
+  scoreLabel: {
+    color: Colors.muted,
+    fontSize: FontSize.xs,
+    letterSpacing: 2,
+    marginTop: -4,
+    marginBottom: Spacing.sm,
   },
   accuracy: {
-    color: Colors.muted,
+    color: Colors.offWhite,
     fontSize: FontSize.md,
   },
   buttonRow: {
