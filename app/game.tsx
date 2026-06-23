@@ -19,10 +19,12 @@ import { MathMasteryModel } from '../engine/mlModel';
 import { triggerSuccessHaptic, triggerErrorHaptic, triggerImpactHaptic } from '../utils/haptics';
 import {
   lockBrick,
-  clearFullRows,
   isValidPosition,
   isGameOver,
   tryRotate,
+  applyGridGravity,
+  clearLinesChain,
+  getBrickCells,
 } from '../engine/engine';
 import {
   randomTetromino,
@@ -39,6 +41,7 @@ import {
   COMBO_MULTIPLIER,
   MAX_RETRIES,
   GRID_COLS,
+  GRID_ROWS,
 } from '../constants/config';
 import { Colors, FontSize, Spacing, Radius } from '../constants/theme';
 
@@ -71,6 +74,22 @@ export default function GameScreen() {
   const [hintVisible, setHintVisible] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
   const feedbackAnim = useRef(new Animated.Value(0)).current;
+
+  // Burst animation state
+  const [bursts, setBursts] = useState<Array<{ id: string; row: number; col: number; color: string }>>([]);
+
+  const triggerBurstAnimation = useCallback((cells: Array<{ row: number; col: number }>, color: string) => {
+    const newBursts = cells.map(cell => ({
+      id: `${cell.row}-${cell.col}-${Date.now()}-${Math.random()}`,
+      row: cell.row,
+      col: cell.col,
+      color,
+    }));
+    setBursts(prev => [...prev, ...newBursts]);
+    setTimeout(() => {
+      setBursts(prev => prev.filter(b => !newBursts.includes(b)));
+    }, 450);
+  }, []);
 
   // ML model instance
   const mlModel = useRef(new MathMasteryModel()).current;
@@ -142,9 +161,10 @@ export default function GameScreen() {
       [cols[i], cols[j]] = [cols[j], cols[i]];
     }
 
+    const pieceId = `piece-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     let brick = null;
     for (const startCol of cols) {
-      const candidate = createFallingBrick(tetro, eq, startCol, baseInterval);
+      const candidate = createFallingBrick(tetro, eq, startCol, baseInterval, pieceId);
       if (isValidPosition(gridRef.current, candidate)) {
         brick = candidate;
         break;
@@ -169,15 +189,15 @@ export default function GameScreen() {
       setCurrentBrick({ ...brick, row: brick.row + 1 });
     } else {
       // Lock the brick
-      const newGrid = lockBrick(g, brick);
-      const { grid: cleared, linesCleared: lines, clearedRows } = clearFullRows(newGrid);
+      const newGrid = lockBrick(g, brick, brick.pieceId);
+      const { grid: cleared, linesCleared: lines, clearedCellPositions } = clearLinesChain(newGrid);
 
       if (lines > 0) {
         playSound('clear');
-        setClearedRows(clearedRows);
-        const pts = SCORE.rowClearMulti(lines) * (isHotStreak ? COMBO_MULTIPLIER : 1);
+        const pts = lines * 100; // 100 points per line clear!
         addScore(pts);
         incrementLines(lines);
+        triggerBurstAnimation(clearedCellPositions, Colors.white);
       }
 
       playSound('lock');
@@ -190,7 +210,7 @@ export default function GameScreen() {
         setTimeout(spawnBrick, 100);
       }
     }
-  }, [spawnBrick, isHotStreak, levelUpActive]);
+  }, [spawnBrick, levelUpActive, triggerBurstAnimation]);
 
   // ─── Start / Restart Tick Interval ─────────────────────────────────────────
   const startTick = useCallback((interval: number) => {
@@ -223,48 +243,93 @@ export default function GameScreen() {
   // ─── Answer Submit ──────────────────────────────────────────────────────────
   const handleAnswer = useCallback((input: string) => {
     if (levelUpActive || phase !== 'playing') return;
+    
+    // Check current falling brick first
     const brick = brickRef.current;
-    if (!brick) return;
-
-    const correct = validateAnswer(brick.equation, input);
-
-    if (correct) {
+    if (brick && validateAnswer(brick.equation, input)) {
       triggerSuccessHaptic();
-      const pts = SCORE.lockCorrect * (isHotStreak ? COMBO_MULTIPLIER : 1);
-      addScore(pts);
+      
+      const cellsToBurst = getBrickCells(brick);
+      triggerBurstAnimation(cellsToBurst, brick.tetromino.color);
+      
+      addScore(10); // 10 points for air solve
       incrementCombo();
       incrementCorrectCount();
       recordCorrect(brick.equation.topic); // async — fire and forget
       addXP(5);
-      showFeedback('✓ Correct!', Colors.success);
-      playSound('lock');
-      if (isHotStreak) playSound('streak');
-    } else {
-      triggerErrorHaptic();
-      if (brick.retries < MAX_RETRIES) {
-        const penalised = applySpeedPenalty(brick);
-        setCurrentBrick(penalised);
-        setWrongAnswerFlash(true);
-        setTimeout(() => setWrongAnswerFlash(false), 500);
-        startTick(penalised.fallInterval);
-        showFeedback('✗ Try again!', Colors.danger);
-        playSound('wrong');
-      } else {
-        // Out of retries — log wrong answer
-        recordWrong({
-          equation: brick.equation.display,
-          userAnswer: input,
-          correctAnswer: brick.equation.answer,
-          topic: brick.equation.topic,
-          difficulty,
-          timestamp: Date.now(),
-        });
-        resetCombo();
-        showFeedback(`Answer: ${brick.equation.answer}`, Colors.warning);
-        playSound('wrong');
-      }
+      showFeedback('✓ Solved in Air! +10', Colors.success);
+      playSound('clear');
+      
+      setCurrentBrick(null);
+      setTimeout(spawnBrick, 100);
+      return;
     }
-  }, [isHotStreak, difficulty, levelUpActive, phase]);
+
+    // Scan grid for locked pieces matching the answer
+    const g = gridRef.current;
+    let foundPieceId: string | null = null;
+    let foundColor: string = Colors.primary;
+    let foundTopic: any = null;
+    
+    for (let r = 0; r < GRID_ROWS; r++) {
+      for (let c = 0; c < GRID_COLS; c++) {
+        const cell = g[r][c];
+        if (cell && validateAnswer(cell.equation, input)) {
+          foundPieceId = cell.pieceId;
+          foundColor = cell.color;
+          foundTopic = cell.equation.topic;
+          break;
+        }
+      }
+      if (foundPieceId) break;
+    }
+
+    if (foundPieceId) {
+      triggerSuccessHaptic();
+      
+      const cellsToBurst: Array<{ row: number; col: number }> = [];
+      const newGrid = g.map((row, r) => row.map((cell, c) => {
+        if (cell && cell.pieceId === foundPieceId) {
+          cellsToBurst.push({ row: r, col: c });
+          return null;
+        }
+        return cell;
+      }));
+
+      triggerBurstAnimation(cellsToBurst, foundColor);
+      
+      addScore(5); // 5 points for ground solve
+      incrementCombo();
+      incrementCorrectCount();
+      recordCorrect(foundTopic);
+      addXP(3);
+      showFeedback('✓ Solved on Ground! +5', Colors.success);
+      playSound('clear');
+      
+      // Apply gravity
+      let collapsedGrid = applyGridGravity(newGrid);
+      
+      // Check for row clears
+      const chainResult = clearLinesChain(collapsedGrid);
+      if (chainResult.linesCleared > 0) {
+        playSound('clear');
+        const pts = chainResult.linesCleared * 100; // 100 points per line clear
+        addScore(pts);
+        incrementLines(chainResult.linesCleared);
+        triggerBurstAnimation(chainResult.clearedCellPositions, Colors.white);
+        collapsedGrid = chainResult.grid;
+      }
+
+      setGrid(collapsedGrid);
+      return;
+    }
+
+    // Wrong answer - no match
+    triggerErrorHaptic();
+    resetCombo();
+    showFeedback('✗ No matching equation!', Colors.danger);
+    playSound('wrong');
+  }, [levelUpActive, phase, spawnBrick, triggerBurstAnimation]);
 
   // ─── Feedback Banner ────────────────────────────────────────────────────────
   const showFeedback = (msg: string, _color: string) => {
@@ -409,7 +474,7 @@ export default function GameScreen() {
 
       {/* Board */}
       <View style={styles.boardWrapper}>
-        <GameBoard grid={grid} currentBrick={currentBrick} wrongFlash={wrongAnswerFlash} />
+        <GameBoard grid={grid} currentBrick={currentBrick} wrongFlash={wrongAnswerFlash} bursts={bursts} />
       </View>
 
       {/* Feedback banner */}

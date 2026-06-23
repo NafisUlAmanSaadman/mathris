@@ -70,7 +70,6 @@ export default function ReviewScreen() {
         {/* Game over header */}
         <View style={styles.header}>
           <Text style={[styles.title, { fontFamily: headingMediumFont }]}>GAME OVER</Text>
-          <StarRating count={stars} />
           <Text style={[styles.score, { fontFamily: monoBoldFont }]}>{score.toLocaleString()}</Text>
           <Text style={[styles.scoreLabel, { fontFamily: headingMediumFont }]}>POINTS</Text>
           <Text style={[styles.accuracy, { fontFamily: bodyFont }]}>

@@ -1,11 +1,17 @@
 import { GRID_COLS, GRID_ROWS } from '../constants/config';
 import type { FallingBrick } from './bricks';
 import { rotateCW } from './bricks';
+import type { Equation } from './equations';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-/** null = empty cell, string = hex color of locked brick */
-export type Cell = null | string;
+export interface GridCell {
+  color: string;
+  pieceId: string;
+  equation: Equation;
+}
+
+export type Cell = null | GridCell;
 export type Grid = Cell[][];
 
 export interface ClearResult {
@@ -41,11 +47,15 @@ export function isValidPosition(grid: Grid, brick: FallingBrick, dRow = 0, dCol 
 }
 
 /** Lock a brick into the grid */
-export function lockBrick(grid: Grid, brick: FallingBrick): Grid {
+export function lockBrick(grid: Grid, brick: FallingBrick, pieceId: string): Grid {
   const newGrid = grid.map(r => [...r]);
   getBrickCells(brick).forEach(({ row, col }) => {
     if (row >= 0 && row < GRID_ROWS && col >= 0 && col < GRID_COLS) {
-      newGrid[row][col] = brick.tetromino.color;
+      newGrid[row][col] = {
+        color: brick.tetromino.color,
+        pieceId,
+        equation: brick.equation,
+      };
     }
   });
   return newGrid;
@@ -96,4 +106,75 @@ export function getGhostRow(grid: Grid, brick: FallingBrick): number {
 /** Check if any cell in row 0 is occupied (game over) */
 export function isGameOver(grid: Grid): boolean {
   return grid[0].some(cell => cell !== null);
+}
+
+/** Apply grid gravity: collapse all floating cells to the bottom */
+export function applyGridGravity(grid: Grid): Grid {
+  const newGrid: Grid = Array.from({ length: GRID_ROWS }, () => Array(GRID_COLS).fill(null));
+  for (let col = 0; col < GRID_COLS; col++) {
+    const columnCells: GridCell[] = [];
+    for (let row = GRID_ROWS - 1; row >= 0; row--) {
+      if (grid[row][col] !== null) {
+        columnCells.push(grid[row][col] as GridCell);
+      }
+    }
+    let targetRow = GRID_ROWS - 1;
+    for (const cell of columnCells) {
+      newGrid[targetRow][col] = cell;
+      targetRow--;
+    }
+  }
+  return newGrid;
+}
+
+export interface ChainClearResult {
+  grid: Grid;
+  linesCleared: number;
+  clearedCellPositions: Array<{ row: number; col: number }>;
+}
+
+/** Clear completed rows, their associated piece cells, apply gravity */
+export function clearLinesChain(grid: Grid): ChainClearResult {
+  const completedRows: number[] = [];
+  for (let r = 0; r < GRID_ROWS; r++) {
+    if (grid[r].every(c => c !== null)) {
+      completedRows.push(r);
+    }
+  }
+
+  if (completedRows.length === 0) {
+    return { grid, linesCleared: 0, clearedCellPositions: [] };
+  }
+
+  // Collect pieceIds of all cells in completed rows
+  const pieceIdsToClear = new Set<string>();
+  completedRows.forEach(r => {
+    grid[r].forEach(cell => {
+      if (cell) pieceIdsToClear.add(cell.pieceId);
+    });
+  });
+
+  // Track cleared positions
+  const clearedCellPositions: Array<{ row: number; col: number }> = [];
+  grid.forEach((row, r) => {
+    row.forEach((cell, c) => {
+      if (cell && pieceIdsToClear.has(cell.pieceId)) {
+        clearedCellPositions.push({ row: r, col: c });
+      }
+    });
+  });
+
+  // Clear all cells with these pieceIds
+  const newGrid = grid.map(row =>
+    row.map(cell => (cell && pieceIdsToClear.has(cell.pieceId) ? null : cell))
+  );
+
+  // Apply gravity collapse
+  const collapsedGrid = applyGridGravity(newGrid);
+
+  return {
+    grid: collapsedGrid,
+    linesCleared: completedRows.length,
+    clearedCellPositions,
+  };
 }

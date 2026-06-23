@@ -21,6 +21,7 @@ export interface FallingBrick {
   fallInterval: number; // current ms between ticks (decreases on penalty)
   retries: number;   // wrong-answer retries used
   frozen: boolean;
+  pieceId: string;
 }
 
 // ─── Tetromino Shapes ────────────────────────────────────────────────────────
@@ -98,6 +99,7 @@ export function createFallingBrick(
   equation: Equation,
   startCol: number,
   baseInterval: number,
+  pieceId: string,
 ): FallingBrick {
   return {
     tetromino,
@@ -107,6 +109,7 @@ export function createFallingBrick(
     fallInterval: baseInterval,
     retries: 0,
     frozen: false,
+    pieceId,
   };
 }
 

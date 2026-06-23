@@ -59,7 +59,8 @@ Research consistently shows that spaced-repetition under mild time pressure dram
 | Feature | Description |
 |---|---|
 | 🧮 **Three difficulty tiers** | Arithmetic → Single-variable algebra → Systems of equations |
-| 🔢 **Live equation on every brick** | Each falling tetromino carries a unique equation |
+| 🔢 Live block equations | Equations are printed directly on the blocks (both falling and grounded) |
+| 🎮 Cascading Gravity | Solving a block under existing blocks causes the upper blocks to drop down |
 | ⌨️ **Answer keypad** | Custom numpad at the bottom — optimised for speed and touch |
 | 🧊 **Freeze tokens** | Pause a brick mid-fall for 10 seconds — buy time to think |
 | 💡 **Hint tokens** | Reveal step-by-step solutions mid-game |
@@ -67,7 +68,6 @@ Research consistently shows that spaced-repetition under mild time pressure dram
 | 📝 **Wrong-answer log** | Every missed equation saved and reviewed after the game |
 | 📊 **Parent/Teacher Dashboard** | Per-topic accuracy charts, score history, weakest-concept flags |
 | 🎯 **Topic Filter / Practice Mode** | Drill a single topic (e.g. "only division") without full game pressure |
-| ⭐ **Star rating system** | 1–3 stars per game based on accuracy |
 | 🏆 **XP & Level progression** | Persistent experience points across sessions |
 | 📴 **Fully offline** | All data stored locally — no account, no internet required |
 
@@ -103,10 +103,10 @@ Research consistently shows that spaced-repetition under mild time pressure dram
 ```
 
 **The core loop:**
-1. A tetromino falls from the top — it carries a math equation
-2. You read the equation and type your answer in the keypad below
-3. **Correct →** the brick locks normally; full rows clear for bonus points
-4. **Wrong →** the brick flashes red and speeds up by ~12%. You get one retry before it locks without clearing
+1. Tetrominoes fall from the top with equations printed directly on them.
+2. Solve any block in the air (for +10 points) or on the ground (for +5 points) by submitting its answer.
+3. Solving a block makes it disappear with a burst animation, and any blocks stacked on top cascade down according to gravity.
+4. Completing a straight horizontal row clears the row, bursts all related piece cells, and awards +100 points.
 
 The Tetris pressure is preserved — but now it has a *mathematical cause*.
 
@@ -457,13 +457,13 @@ Accessible from the Main Menu → **📊 Dashboard**. No login required — all 
 
 ---
 
-## 🤖 On-Device Machine Learning (Adaptive Mode)
+## 📊 On-Device Adaptive Practice Mode
 
-Mathris includes a pure-TypeScript **Logistic Regression Classifier** running completely on-device. The model trains using **Stochastic Gradient Descent (SGD)** on the player's equation attempt history.
+Mathris includes an adaptive topic selector running completely on-device, utilizing historical practice statistics.
 
-- **Struggle Forecast**: It calculates features (bias, difficulty multipliers, and one-hot topic weights) to predict the probability of failure (`P(Wrong)`) for each topic.
-- **Adaptive Spawning**: When the player enables **"Target Weak Areas (Adaptive)"**, the equation generator utilizes the model's predictions to run a weighted selection (roulette wheel), spawning equations they struggle with more frequently to maximize learning.
-- **Diagnostics**: The parent/teacher dashboard displays live training metrics including Cross-Entropy loss, total training samples, and individual topic error probabilities.
+- **Struggle Rates**: It computes actual historical error rates for each math topic using the formula `(attempts - correct) / attempts`.
+- **Adaptive Spawning**: When the player enables **"Target Weak Areas (Adaptive)"**, the equation generator utilizes these struggle rates to run a weighted selection (roulette wheel), spawning equation types the player has historically failed or not yet attempted.
+- **Diagnostics**: The parent/teacher dashboard displays real-time statistics including total practice attempts, correct answers, overall accuracy, and detailed topic-by-topic struggle rates.
 
 ---
 
