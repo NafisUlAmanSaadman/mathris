@@ -1,14 +1,11 @@
 import type { MasteryEntry } from '../data/repository';
 
 export interface MLReport {
-  loss: number;
   totalSamples: number;
-  epochsRun: number;
   predictions: Array<{
     topic: string;
     predictedErrorRate: number; // 0.0 – 1.0
   }>;
-  weightsSummary: Record<string, number>;
 }
 
 // All equation topics mapped to indexes for one-hot encoding
@@ -27,13 +24,8 @@ export const ML_TOPICS = [
 
 export type MLTopic = (typeof ML_TOPICS)[number];
 
-// Helper: sigmoid function
-function sigmoid(z: number): number {
-  return 1 / (1 + Math.exp(-Math.max(-20, Math.min(20, z))));
-}
-
 // Helper: get topic difficulty factor
-export function getTopicDifficultyFactor(topic: string): number {
+function getTopicDifficultyFactor(topic: string): number {
   if (['addition', 'subtraction', 'multiplication', 'division', 'mixed'].includes(topic)) {
     return 1.0; // Easy
   }
@@ -62,11 +54,8 @@ export class MathMasteryModel {
     const totalSamples = Object.values(masteryData).reduce((sum, v) => sum + v.attempts, 0);
 
     return {
-      loss: 0.0,
       totalSamples,
-      epochsRun: 0,
       predictions: predictions.sort((a, b) => b.predictedErrorRate - a.predictedErrorRate), // Hardest first
-      weightsSummary: {},
     };
   }
 

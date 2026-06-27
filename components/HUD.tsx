@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Colors, FontSize, Spacing, Radius } from '../constants/theme';
-import type { FallingBrick } from '../engine/bricks';
 import { useFontFamily } from '../store/progressStore';
 
 interface Props {
@@ -11,7 +10,6 @@ interface Props {
   isHotStreak: boolean;
   freezeTokens: number;
   hintTokens: number;
-  nextBrick: FallingBrick | null;
 }
 
 export default function HUD({
@@ -21,7 +19,6 @@ export default function HUD({
   isHotStreak,
   freezeTokens,
   hintTokens,
-  nextBrick,
 }: Props) {
   const streakAnim = useRef(new Animated.Value(0)).current;
 

@@ -38,8 +38,6 @@ import {
   FREEZE_DURATION_MS,
   SCORE,
   HINT_SCORE_COST,
-  COMBO_MULTIPLIER,
-  MAX_RETRIES,
   GRID_COLS,
   GRID_ROWS,
 } from '../constants/config';
@@ -58,18 +56,16 @@ export default function GameScreen() {
     phase, setPhase, difficulty,
     grid, setGrid,
     currentBrick, setCurrentBrick,
-    nextBrick, setNextBrick,
     score, addScore,
     level, linesCleared, incrementLines,
     combo, isHotStreak, incrementCombo, resetCombo,
     correctCount, incrementCorrectCount,
     freezeTokens, hintTokens, useFreeze, useHint,
     wrongAnswerFlash, setWrongAnswerFlash,
-    setClearedRows,
     practiceTopic,
   } = useGameStore();
 
-  const { recordCorrect, recordWrong, recordSession, addXP, adaptiveModeEnabled, masteryByTopic } = useProgressStore();
+  const { recordCorrect, recordSession, addXP, adaptiveModeEnabled, masteryByTopic } = useProgressStore();
 
   const [hintVisible, setHintVisible] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
@@ -461,7 +457,6 @@ export default function GameScreen() {
         isHotStreak={isHotStreak}
         freezeTokens={freezeTokens}
         hintTokens={hintTokens}
-        nextBrick={nextBrick}
       />
 
       {/* Equation Chalk Strip */}

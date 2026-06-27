@@ -11,7 +11,6 @@ import { useRouter } from 'expo-router';
 import { useProgressStore, useFontFamily } from '../store/progressStore';
 import { useGameStore } from '../store/gameStore';
 import type { WrongAnswerEntry } from '../data/repository';
-import StarRating from '../components/StarRating';
 import { Colors, FontSize, Spacing, Radius } from '../constants/theme';
 import { STARS } from '../constants/config';
 import { triggerImpactHaptic } from '../utils/haptics';

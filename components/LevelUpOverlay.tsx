@@ -9,6 +9,7 @@ import Animated, {
   withSequence,
   Easing,
   cancelAnimation,
+  type SharedValue,
 } from 'react-native-reanimated';
 import { Colors, FontSize, Spacing, Radius, Shadow } from '../constants/theme';
 import { triggerSuccessHaptic } from '../utils/haptics';
@@ -40,6 +41,25 @@ const PARTICLES = Array.from({ length: PARTICLE_COUNT }, (_, i) => {
     dy: Math.sin(angle) * (Math.random() * 100 + 60) - 20,
   };
 });
+
+function Particle({ p, particlesProgress }: { p: typeof PARTICLES[number]; particlesProgress: Animated.SharedValue<number> }) {
+  const particleStyle = useAnimatedStyle(() => {
+    const x = p.dx * particlesProgress.value;
+    const y = p.dy * particlesProgress.value;
+    const op = 1 - particlesProgress.value;
+    const rot = particlesProgress.value * 540;
+    return {
+      transform: [{ translateX: x }, { translateY: y }, { rotate: `${rot}deg` }],
+      opacity: op,
+    };
+  });
+
+  return (
+    <Animated.View
+      style={[styles.particle, particleStyle, { backgroundColor: p.color, width: p.size, height: p.size, borderRadius: 2 }]}
+    />
+  );
+}
 
 export default function LevelUpOverlay({ newLevel, onClose }: Props) {
   const headingFont = useFontFamily('heading');
@@ -91,38 +111,9 @@ export default function LevelUpOverlay({ newLevel, onClose }: Props) {
   return (
     <Animated.View style={[styles.container, bgStyle]}>
       {/* Confetti */}
-      {PARTICLES.map(p => {
-        const particleStyle = useAnimatedStyle(() => {
-          const x = p.dx * particlesProgress.value;
-          const y = p.dy * particlesProgress.value;
-          const op = 1 - particlesProgress.value;
-          const rot = particlesProgress.value * 540;
-          return {
-            transform: [
-              { translateX: x },
-              { translateY: y },
-              { rotate: `${rot}deg` },
-            ],
-            opacity: op,
-          };
-        });
-
-        return (
-          <Animated.View
-            key={p.id}
-            style={[
-              styles.particle,
-              particleStyle,
-              {
-                backgroundColor: p.color,
-                width: p.size,
-                height: p.size,
-                borderRadius: 2,
-              },
-            ]}
-          />
-        );
-      })}
+      {PARTICLES.map(p => (
+        <Particle key={p.id} p={p} particlesProgress={particlesProgress} />
+      ))}
 
       {/* Card */}
       <Animated.View style={[styles.card, cardStyle]}>
