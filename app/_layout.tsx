@@ -3,8 +3,7 @@ import { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import { setRepository } from '../data/repositoryProvider';
-import { SQLiteRepository } from '../data/sqliteRepository';
+import { db } from '../data/sqliteRepository';
 import { useProgressStore } from '../store/progressStore';
 import { loadSounds } from '../engine/audio';
 
@@ -27,11 +26,9 @@ export default function RootLayout() {
   useEffect(() => {
     async function boot() {
       try {
-        // ── 1. Initialise the repository (SQLite migrations run here) ──────
-        //    To swap the backend, replace SQLiteRepository with your impl:
-        //    e.g.  new SupabaseRepository(client)
-        //          new InMemoryRepository()
-        await setRepository(new SQLiteRepository());
+        // ── 1. Initialise the database ──────
+        await db.initialize();
+
 
         // ── 2. Hydrate Zustand store from DB ──────────────────────────────
         await loadProgress();

@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 if (Platform.OS === 'web') {
   const { LoadSkiaWeb } = require('@shopify/react-native-skia/lib/module/web');
   LoadSkiaWeb({
-    locateFile: (file) => {
+    locateFile: (file: string) => {
       if (file === 'canvaskit.wasm') {
         return '/canvaskit.wasm';
       }
@@ -13,7 +13,7 @@ if (Platform.OS === 'web') {
     .then(() => {
       require('expo-router/entry');
     })
-    .catch((err) => {
+    .catch((err: any) => {
       console.error('Failed to load Skia Web:', err);
     });
 } else {

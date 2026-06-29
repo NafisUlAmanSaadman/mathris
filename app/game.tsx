@@ -15,7 +15,7 @@ import Keypad from '../components/Keypad';
 import HUD from '../components/HUD';
 import HintModal from '../components/HintModal';
 import LevelUpOverlay from '../components/LevelUpOverlay';
-import { MathMasteryModel } from '../engine/mlModel';
+import { getWeightedTopicList } from '../engine/mlModel';
 import { triggerSuccessHaptic, triggerErrorHaptic, triggerImpactHaptic } from '../utils/haptics';
 import {
   lockBrick,
@@ -87,8 +87,6 @@ export default function GameScreen() {
     }, 450);
   }, []);
 
-  // ML model instance
-  const mlModel = useRef(new MathMasteryModel()).current;
 
   // Level Up State
   const [levelUpActive, setLevelUpActive] = useState(false);
@@ -123,7 +121,7 @@ export default function GameScreen() {
       eq = generateEquation(difficulty, practiceTopic);
     } else if (adaptiveModeEnabled) {
       // Use ML model if Adaptive Mode is enabled
-      const weightedList = mlModel.getWeightedTopicList(difficulty, masteryByTopic);
+      const weightedList = getWeightedTopicList(difficulty, masteryByTopic);
       if (weightedList.length > 0) {
         // Weighted random selection
         const totalWeight = weightedList.reduce((sum, item) => sum + item.weight, 0);

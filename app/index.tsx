@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ScrollView,
   SafeAreaView,
+  Switch,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useGameStore } from '../store/gameStore';
@@ -214,62 +215,59 @@ export default function MenuScreen() {
         {settingsOpen && (
           <View style={styles.settingsBox}>
             {/* Dyslexia Font Toggle */}
-            <TouchableOpacity
-              style={styles.settingRow}
-              onPress={() => {
-                triggerImpactHaptic();
-                toggleDyslexiaFont();
-              }}
-              activeOpacity={0.8}
-            >
+            <View style={styles.settingRow}>
               <View style={styles.settingTextContainer}>
                 <Text style={[styles.settingName, { fontFamily: headingMediumFont }]}>OpenDyslexic font</Text>
                 <Text style={[styles.settingDesc, { fontFamily: bodyFont }]}>Use high-readability typeface</Text>
               </View>
-              <View style={[styles.toggleTrack, dyslexiaFontEnabled && styles.toggleTrackActive]}>
-                <View style={[styles.toggleThumb, dyslexiaFontEnabled && styles.toggleThumbActive]} />
-              </View>
-            </TouchableOpacity>
+              <Switch
+                value={dyslexiaFontEnabled}
+                onValueChange={() => {
+                  triggerImpactHaptic();
+                  toggleDyslexiaFont();
+                }}
+                trackColor={{ false: Colors.bgSurface, true: 'rgba(232, 115, 90, 0.4)' }}
+                thumbColor={dyslexiaFontEnabled ? Colors.primary : Colors.muted}
+              />
+            </View>
 
             <View style={styles.divider} />
 
             {/* Haptics Toggle */}
-            <TouchableOpacity
-              style={styles.settingRow}
-              onPress={() => {
-                triggerImpactHaptic();
-                toggleHaptics();
-              }}
-              activeOpacity={0.8}
-            >
+            <View style={styles.settingRow}>
               <View style={styles.settingTextContainer}>
                 <Text style={[styles.settingName, { fontFamily: headingMediumFont }]}>Haptic feedback</Text>
                 <Text style={[styles.settingDesc, { fontFamily: bodyFont }]}>Vibrate on key clicks and solving</Text>
               </View>
-              <View style={[styles.toggleTrack, hapticsEnabled && styles.toggleTrackActive]}>
-                <View style={[styles.toggleThumb, hapticsEnabled && styles.toggleThumbActive]} />
-              </View>
-            </TouchableOpacity>
+              <Switch
+                value={hapticsEnabled}
+                onValueChange={() => {
+                  triggerImpactHaptic();
+                  toggleHaptics();
+                }}
+                trackColor={{ false: Colors.bgSurface, true: 'rgba(232, 115, 90, 0.4)' }}
+                thumbColor={hapticsEnabled ? Colors.primary : Colors.muted}
+              />
+            </View>
 
             <View style={styles.divider} />
 
             {/* Adaptive ML Mode Toggle */}
-            <TouchableOpacity
-              style={styles.settingRow}
-              onPress={() => {
-                triggerImpactHaptic();
-                toggleAdaptiveMode();
-              }}
-              activeOpacity={0.8}
-            >
+            <View style={styles.settingRow}>
               <View style={styles.settingTextContainer}>
                 <Text style={[styles.settingName, { fontFamily: headingMediumFont }]}>Adaptive difficulty</Text>
                 <Text style={[styles.settingDesc, { fontFamily: bodyFont }]}>Target equations you struggle with</Text>
               </View>
-              <View style={[styles.toggleTrack, adaptiveModeEnabled && styles.toggleTrackActive]}>
-                <View style={[styles.toggleThumb, adaptiveModeEnabled && styles.toggleThumbActive]} />
-              </View>
-            </TouchableOpacity>
+              <Switch
+                value={adaptiveModeEnabled}
+                onValueChange={() => {
+                  triggerImpactHaptic();
+                  toggleAdaptiveMode();
+                }}
+                trackColor={{ false: Colors.bgSurface, true: 'rgba(232, 115, 90, 0.4)' }}
+                thumbColor={adaptiveModeEnabled ? Colors.primary : Colors.muted}
+              />
+            </View>
           </View>
         )}
 
@@ -481,30 +479,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs,
     marginTop: 2,
   },
-  toggleTrack: {
-    width: 46,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: Colors.bgSurface,
-    borderWidth: 1,
-    borderColor: Colors.bgBorder,
-    justifyContent: 'center',
-    paddingHorizontal: 2,
-  },
-  toggleTrackActive: {
-    backgroundColor: 'rgba(232, 115, 90, 0.2)',
-    borderColor: Colors.primary,
-  },
-  toggleThumb: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: Colors.muted,
-  },
-  toggleThumbActive: {
-    backgroundColor: Colors.primary,
-    alignSelf: 'flex-end',
-  },
+
   divider: {
     height: 1,
     backgroundColor: Colors.bgBorder,

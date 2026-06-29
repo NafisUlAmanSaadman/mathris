@@ -13,7 +13,7 @@ import { BarChart, LineChart } from 'react-native-chart-kit';
 import { useProgressStore, useFontFamily } from '../store/progressStore';
 import type { SessionRecord } from '../data/repository';
 import { Colors, FontSize, Spacing, Radius } from '../constants/theme';
-import { MathMasteryModel } from '../engine/mlModel';
+import { trainMathMastery } from '../engine/mlModel';
 import { triggerImpactHaptic } from '../utils/haptics';
 
 const CHART_CONFIG = {
@@ -42,8 +42,7 @@ export default function DashboardScreen() {
     useProgressStore();
 
   // Run On-Device ML Model Training on current mastery logs
-  const mlModel = useMemo(() => new MathMasteryModel(), []);
-  const mlReport = useMemo(() => mlModel.train(masteryByTopic), [masteryByTopic]);
+  const mlReport = useMemo(() => trainMathMastery(masteryByTopic), [masteryByTopic]);
 
   // Compute stats directly from practice history
   const totalAttempts = useMemo(() => Object.values(masteryByTopic).reduce((sum, v) => sum + v.attempts, 0), [masteryByTopic]);

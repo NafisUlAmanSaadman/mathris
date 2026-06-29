@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { getRepository } from '../data/repositoryProvider';
+import { db } from '../data/sqliteRepository';
 import type { MasteryEntry, WrongAnswerEntry, SessionRecord } from '../data/repository';
+
 import { XP_PER_LEVEL } from '../constants/config';
 import { FontFamily } from '../constants/theme';
 
@@ -79,7 +80,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
   // ── load ──────────────────────────────────────────────────────────────────
 
   load: async () => {
-    const repo = getRepository();
+    const repo = db;
     const [xp, totalGames, masteryByTopic, wrongAnswerLog, sessionHistory, dyslexiaRaw, adaptiveRaw, hapticsRaw] =
       await Promise.all([
         repo.getXP(),
@@ -109,7 +110,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
   // ── recordCorrect ─────────────────────────────────────────────────────────
 
   recordCorrect: async (topic) => {
-    const repo = getRepository();
+    const repo = db;
     await repo.updateMastery(topic, true);
 
     // Optimistic in-memory update
@@ -130,7 +131,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
   // ── recordWrong ───────────────────────────────────────────────────────────
 
   recordWrong: async (entry) => {
-    const repo = getRepository();
+    const repo = db;
     await Promise.all([
       repo.recordWrongAnswer(entry),
       repo.updateMastery(entry.topic, false),
@@ -154,7 +155,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
   // ── recordSession ─────────────────────────────────────────────────────────
 
   recordSession: async (score, accuracy) => {
-    const repo = getRepository();
+    const repo = db;
     await repo.recordSession(score, accuracy);
 
     const [totalGames, sessionHistory] = await Promise.all([
@@ -168,7 +169,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
   // ── addXP ─────────────────────────────────────────────────────────────────
 
   addXP: async (amount) => {
-    const repo = getRepository();
+    const repo = db;
     await repo.addXP(amount);
 
     set(s => {
@@ -181,7 +182,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
 
   toggleDyslexiaFont: async () => {
     const nextVal = !get().dyslexiaFontEnabled;
-    await getRepository().setPreference('dyslexia_font', String(nextVal));
+    await db.setPreference('dyslexia_font', String(nextVal));
     set({ dyslexiaFontEnabled: nextVal });
   },
 
@@ -189,7 +190,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
 
   toggleAdaptiveMode: async () => {
     const nextVal = !get().adaptiveModeEnabled;
-    await getRepository().setPreference('adaptive_mode', String(nextVal));
+    await db.setPreference('adaptive_mode', String(nextVal));
     set({ adaptiveModeEnabled: nextVal });
   },
 
@@ -197,21 +198,21 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
 
   toggleHaptics: async () => {
     const nextVal = !get().hapticsEnabled;
-    await getRepository().setPreference('haptics_enabled', String(nextVal));
+    await db.setPreference('haptics_enabled', String(nextVal));
     set({ hapticsEnabled: nextVal });
   },
 
   // ── clearWrongLog ─────────────────────────────────────────────────────────
 
   clearWrongLog: async () => {
-    await getRepository().clearWrongAnswers();
+    await db.clearWrongAnswers();
     set({ wrongAnswerLog: [] });
   },
 
   // ── clearAll ──────────────────────────────────────────────────────────────
 
   clearAll: async () => {
-    await getRepository().clearAll();
+    await db.clearAll();
     set({
       xp: 0,
       level: 1,
@@ -221,6 +222,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       sessionHistory: [],
     });
   },
+
 }));
 
 // ─── useFontFamily Hook ────────────────────────────────────────────────────────

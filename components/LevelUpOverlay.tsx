@@ -42,7 +42,7 @@ const PARTICLES = Array.from({ length: PARTICLE_COUNT }, (_, i) => {
   };
 });
 
-function Particle({ p, particlesProgress }: { p: typeof PARTICLES[number]; particlesProgress: Animated.SharedValue<number> }) {
+function Particle({ p, particlesProgress }: { p: typeof PARTICLES[number]; particlesProgress: SharedValue<number> }) {
   const particleStyle = useAnimatedStyle(() => {
     const x = p.dx * particlesProgress.value;
     const y = p.dy * particlesProgress.value;

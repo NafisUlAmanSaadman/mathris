@@ -1,5 +1,5 @@
 import * as SQLite from 'expo-sqlite';
-import type { IRepository, MasteryEntry, WrongAnswerEntry, SessionRecord } from './repository';
+import type { MasteryEntry, WrongAnswerEntry, SessionRecord } from './repository';
 import { XP_PER_LEVEL } from '../constants/config';
 
 // ─── Schema & Migrations ─────────────────────────────────────────────────────
@@ -48,7 +48,8 @@ const MIGRATIONS: string[] = [
 
 // ─── SQLiteRepository ─────────────────────────────────────────────────────────
 
-export class SQLiteRepository implements IRepository {
+export class SQLiteRepository {
+
   private db!: SQLite.SQLiteDatabase;
   private readonly dbName: string;
 
@@ -252,3 +253,6 @@ export class SQLiteRepository implements IRepository {
     });
   }
 }
+
+export const db = new SQLiteRepository();
+
